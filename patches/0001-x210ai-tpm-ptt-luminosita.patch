@@ -1,0 +1,58 @@
+diff --git a/src/mainboard/51nb/x210ai/Kconfig b/src/mainboard/51nb/x210ai/Kconfig
+index d5b329ccc4..0ae2874ccf 100644
+--- a/src/mainboard/51nb/x210ai/Kconfig
++++ b/src/mainboard/51nb/x210ai/Kconfig
+@@ -6,11 +6,15 @@ config BOARD_SPECIFIC_OPTIONS
+ 	def_bool y
+ 	select BOARD_ROMSIZE_KB_32768
+ 	select CONSOLE_CBMEM
++	select CRB_TPM
+ 	select FSP_TYPE_IOT
+ 	select HAVE_ACPI_RESUME
+ 	select HAVE_ACPI_TABLES
++	select HAVE_INTEL_PTT
+ 	select INTEL_GMA_HAVE_VBT
+ 	select INTEL_LPSS_UART_FOR_CONSOLE
++	select MAINBOARD_HAS_TPM2
++	select MEMORY_MAPPED_TPM
+ 	select NO_UART_ON_SUPERIO
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 	select SOC_INTEL_CRASHLOG
+diff --git a/src/mainboard/51nb/x210ai/acpi/ec.asl b/src/mainboard/51nb/x210ai/acpi/ec.asl
+index 9e4f4eeba2..c765c8b7bc 100644
+--- a/src/mainboard/51nb/x210ai/acpi/ec.asl
++++ b/src/mainboard/51nb/x210ai/acpi/ec.asl
+@@ -5,6 +5,9 @@
+  * needs \PWRS and \ECON at root (see mainboard.asl).
+  */
+ 
++External (\_SB.PCI0.GFX0.DECB, MethodObj)
++External (\_SB.PCI0.GFX0.INCB, MethodObj)
++
+ Scope (\_SB.PCI0.LPCB)
+ {
+ 	Device (H_EC)
+@@ -146,6 +149,23 @@ Scope (\_SB.PCI0.LPCB)
+ 			Notify (LID0, 0x80)
+ 		}
+ 
++		/* brightness keys: the vendor dsdt routes these through DHCF. */
++		Method (_Q06, 0, NotSerialized)
++		{
++			If (CondRefOf (\_SB.PCI0.GFX0.DECB))
++			{
++				\_SB.PCI0.GFX0.DECB ()
++			}
++		}
++
++		Method (_Q07, 0, NotSerialized)
++		{
++			If (CondRefOf (\_SB.PCI0.GFX0.INCB))
++			{
++				\_SB.PCI0.GFX0.INCB ()
++			}
++		}
++
+ 		/* power button. */
+ 		Method (_Q54, 0, NotSerialized)
+ 		{

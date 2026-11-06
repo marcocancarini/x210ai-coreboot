@@ -1,0 +1,14 @@
+# Mai in questa repo: software Intel, dump del chip, immagini, config del ME.
+*.bin
+*.rom
+*.fd
+*.exe
+*.rar
+*.efi
+mfit
+fit.log
+config.xml
+config-*.xml
+backup/
+lavoro/
+coreboot/
