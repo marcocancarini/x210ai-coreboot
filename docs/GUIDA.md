@@ -6,7 +6,8 @@ Ogni passo ha un controllo: se fallisce, ci si ferma.
 
 ## 0. Prerequisiti
 
-- XGecu T48 con Xgpro 13 e adattatore WSON-8 della misura giusta.
+- XGecu T48 con Xgpro 13 su un secondo PC Windows, e adattatore WSON-8 della misura giusta.
+- Dump in `backup/` copiati su un disco esterno, leggibile dal secondo PC.
 - Chiavetta con una distribuzione live.
 - Alimentatore collegato durante ogni scrittura.
 - Licenza di Windows collegata all'account Microsoft: cambiando firmware può chiedere una nuova attivazione.
@@ -21,7 +22,9 @@ Non scrive sul chip. **Controllo:** ME status `90000255` e le due letture con lo
 
 ## 2. Recupero col T48
 
-Questo passo decide se si può proseguire.
+Il T48 non è obbligatorio per scrivere: si può flashare dall'interno. È però l'unico modo di recuperare la scheda se non si riavvia, quindi deve essere pronto prima della prima scrittura.
+
+Minimo indispensabile: chip identificato, adattatore giusto in mano, Xgpro funzionante sul secondo PC, dump sul disco esterno. La prova di lettura qui sotto è la via più sicura, ma richiede di aprire e, per l'adattatore, dissaldare.
 
 1. Aprire la macchina e guardare il chip: marking `W25Q256JW` e misura del WSON-8.
 2. In Xgpro scegliere `W25Q256JW @WSON8`, che usa 1,8 V. Non usare mai una voce a 3,3 V.
@@ -38,9 +41,9 @@ Ripetere il dump poco prima, così l'immagine contiene i dati attuali. Procedura
 
 ## 4. Scrittura di Boot Guard off
 
-Via preferita: T48, a macchina spenta, immagine intera `out-bgoff.bin`. Il ME aggiorna la propria regione mentre la macchina è accesa, quindi scrivere da spenta evita di scriverci sopra mentre lavora.
+Con il T48, a macchina spenta, immagine intera `out-bgoff.bin`: è la via più prudente, perché il ME aggiorna la propria regione mentre la macchina è accesa.
 
-Alternativa interna, con la sola regione ME:
+Dall'interno, con la sola regione ME, subito dopo un dump nuovo, a sistema fermo e con l'alimentatore collegato. `flashrom` segnala "SPI Configuration is locked down": le regioni risultano scrivibili, ma la conferma arriva solo alla prima scrittura vera.
 
 ```sh
 sudo modprobe -r spi_intel_pci spi_intel
