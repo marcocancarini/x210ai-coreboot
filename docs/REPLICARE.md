@@ -69,7 +69,8 @@ Per `partizioni-me.py` serve anche un'immagine di controllo: stessa build con `c
 | `mfit-sandbox.sh` | MFIT sotto wine, senza rete, con accesso alla sola cartella di lavoro |
 | `verifica-firma.py` | Firma Authenticode e firmatario |
 | `descriptor.py` | Regioni e permessi del flash descriptor |
+| `analisi-bootguard.py` | Catena di Boot Guard da un dump e stato del ME, senza stampare dati della macchina |
 | `confronta-regioni.py` | Differenze tra due immagini, regione per regione |
 | `partizioni-me.py` | Partizioni del ME e blocchi cambiati |
 | `vbt-info.py` | Controllo di un VBT |
-| `acpi-tpm2.py` | Tipo di TPM dalla tabella ACPI, da un `acpidump` |
+| `acpi-tpm2.py` | Tipo di TPM dalla tabella ACPI, da un `acpidump` del BIOS originale |

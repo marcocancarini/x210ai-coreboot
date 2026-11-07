@@ -1,0 +1,20 @@
+diff --git a/src/mainboard/51nb/x210ai/ramstage.c b/src/mainboard/51nb/x210ai/ramstage.c
+--- a/src/mainboard/51nb/x210ai/ramstage.c
++++ b/src/mainboard/51nb/x210ai/ramstage.c
+@@ -1,5 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ 
++#include <intelblocks/cse.h>
+ #include <mainboard/gpio.h>
+ #include <soc/ramstage.h>
+ 
+@@ -14,6 +15,9 @@ struct chip_operations mainboard_ops = {
+ 
+ void mainboard_silicon_init_params(FSP_S_CONFIG *params)
+ {
++	/* before fsp-s, so heci is still up and eop has not been sent. */
++	cse_enable_ptt(false);
++
+ 	params->PchEspiHostC10ReportEnable = 0;
+ 
+ 	/* hot-plug keeps port 0's phy powered so the sata drive trains */
