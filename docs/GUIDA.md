@@ -2,7 +2,7 @@
 
 Questa guida parte da quella di Fionn Cassidy, autore del port ([`x210ai.md`](https://github.com/WheeledCord/coreboot-x210ai/blob/x210ai/Documentation/mainboard/51nb/x210ai.md)), e la adatta a questa scheda: Core Ultra 7 165H, ME 18.0.5.2098, pannello 2560x1600, Wi-Fi AX210, Windows e CachyOS sullo stesso disco.
 
-> **Stato al 2026-11-07: nulla è stato scritto sul chip.** Boot Guard è ancora attivo. La ROM da usare è quella **senza TPM** in `output-2`. Le analisi sono state fatte sui dump, le scritture dei passi 4 e 6 non sono mai state provate qui.
+> **Stato al 2026-11-08: nulla è stato scritto sul chip.** Boot Guard è ancora attivo. La ROM da usare è `output-4`: **senza TPM**, microcode `0x2b`, Thunderbolt su RP1 (`output-3` è la stessa senza Thunderbolt). Le analisi sono state fatte sui dump, le scritture dei passi 4 e 6 non sono mai state provate qui.
 
 Nel testo, **misurato** indica un dato letto da questa scheda o dai suoi dump, **dedotto** un'interpretazione nostra, **non provato** qualcosa che nessuno ha ancora verificato qui.
 
@@ -40,7 +40,7 @@ La sequenza è la stessa: controllare il manufacturing mode, disattivare Boot Gu
 | `mfit --loadconfig config.xml --build ...` | Nella stessa riga anche `--decompose dump.bin` | È il comando usato qui: la config rimanda ai file estratti dal dump |
 | `flashrom -p internal -w dump_bgdisabled.bin`, chip intero | Solo la regione ME, oppure T48 a macchina spenta | MFIT cambia solo il ME; riscrivere tutto a sistema acceso riporta indietro anche le variabili UEFI |
 | "SPI programmer" generico | T48 a 1,8 V, mai 3,3 V | Il chip è un W25Q256JW |
-| MFIT 18.0.10.2285 | MFIT 18.1.18.2749 | È l'unica versione ottenuta. Non è provata su questa scheda |
+| MFIT 18.0.10.2285 | MFIT 18.1.18.2749 costruita; 18.0.10.2285 ora disponibile | La 18.0 è la stessa dell'autore: firma Intel verificata, immagine da costruire. [Confronto](#mfit-180-o-181) |
 | TPM non provato, "PTT non abilitato" | PTT è attivo col BIOS originale, ma qui viene **tolto di proposito** | Misurato: `PttSupported=Yes`. Motivi nella [sezione 10](#10-tpm-spento) |
 | Provato solo su Linux | Windows da provare per primo | Windows serve su questa macchina |
 | Niente tasti luminosità | `_Q06` e `_Q07` aggiunti | Ricavati dal DSDT originale |
@@ -355,20 +355,52 @@ KM, BPM e hash della chiave restano nel chip. Senza una politica attiva non dovr
 
 #### I 518 byte in `0x449000`
 
-Il dump contiene due copie di UEP. Confrontandole si vede che cosa è successo:
+**In breve: non è un errore di MFIT e non è una vulnerabilità in sé.** È lo slot di riserva di UEP, che MFIT lascia vuoto come in un firmware appena uscito dalla fabbrica.
 
-| Campo | Copia principale `0x448000` | Seconda copia `0x449000` | Ricostruita da MFIT |
+**Com'è fatta UEP.** Nella tabella `$FPT` la partizione va da `0x448000` a `0x44A000`: 8 KiB, cioè due slot da 4 KiB. Ogni slot contiene un record di 520 byte (`0x208`):
+
+| Offset | Contenuto |
+|---|---|
+| `+0x00` | Firma `$UEP`, oppure `00000000` se il record è invalidato |
+| `+0x04` | **CRC-16/CCITT-FALSE** dei byte `+0x06`-`+0x208` (polinomio `0x1021`, valore iniziale `0xFFFF`) |
+| `+0x53` | Profilo di Boot Guard: `D8` Debug Profile, `18` disattivato |
+| `+0x58` | Flag scritto dal ME, funzione ignota |
+| `+0xA0` | Hash della chiave OEM, lo stesso di `OemPublicKeyHash` |
+
+Il CRC è stato **identificato, non solo dedotto**: lo stesso algoritmo riproduce il valore salvato in tutti e quattro i record disponibili (due nel dump, uno nella ricostruzione di controllo, uno in Boot Guard off). `tools/uep.py` lo ricalcola.
+
+**Che cosa c'è nel dump:**
+
+| Slot | Stato | CRC | `+0x58` |
 |---|---|---|---|
-| Firma, 4 byte | `$UEP` | `00 00 00 00` | `$UEP` / `FF` |
-| Checksum, 2 byte | `A6 38` | `83 A8` | `83 A8` / `FF` |
-| Byte `+0x58` | `01` | `00` | `00` / `FF` |
-| Resto | Uguale | Uguale | Uguale / `FF` |
+| A, `0x448000` | Valido | `38A6` | `01` |
+| B, `0x449000` | Invalidato: firma azzerata | `A883` | `00` |
 
-Sono esattamente 7 byte di differenza tra le due copie. La lettura più semplice (dedotta) è questa: la seconda copia è la versione di fabbrica, invalidata azzerandone la firma, e la principale è quella riscritta dal ME quando ha alzato il byte `+0x58`. Il checksum della seconda copia coincide con quello ricostruito da MFIT, il che la conferma.
+Lo slot B è **identico byte per byte** al record che MFIT ricostruisce da `config.xml`, firma a parte. Prendendo quel record e mettendo `+0x58` a 1, il CRC ricalcolato è `38A6`: **esattamente** lo slot A del dump. Quindi il ME ha fatto una sola cosa, alzare quel flag, con il metodo tipico delle memorie flash:
 
-MFIT riparte dalla configurazione, quindi produce UEP come appena uscita dalla fabbrica: byte `+0x58` a 0 e seconda copia vuota (i 518 byte diventano `FF`).
+1. copia il record di fabbrica nello slot libero B;
+2. riscrive lo slot A con il flag a 1 e il nuovo CRC;
+3. invalida la copia in B azzerandone la firma. Su una flash i bit passano da 1 a 0 senza cancellare il settore, quindi è un'operazione sicura anche se manca la corrente.
 
-**Conseguenza pratica:** il ME vedrà quel flag azzerato, e non sappiamo a cosa serva. Potrebbe solo segnare "primo avvio completato". Dovrebbe capitare a chiunque ricostruisca l'immagine con MFIT, come ha fatto l'autore del port. Il rischio sembra basso, ma il primo avvio va osservato ([sezione 13](#13-punti-ancora-da-verificare)).
+**Perché 518 e non 520.** MFIT cancella tutto lo slot B, cioè lo riporta a `FF`. Dei 520 byte del record, 2 erano già `FF` nel dump, quindi i byte che cambiano sono 518. Non vengono "scambiati": vengono cancellati.
+
+**Errore o vulnerabilità?**
+
+| Ipotesi | Valutazione |
+|---|---|
+| Errore di MFIT | **No.** MFIT costruisce l'immagine dalla configurazione, quindi produce lo stato di fabbrica: slot A con flag a 0, slot B vuoto. Lo stesso succede nella ricostruzione senza modifiche |
+| La copia in B è un rischio | **No.** È invalidata, contiene solo dati presenti anche in A e un hash di chiave pubblica, uguale su tutte le X210AI. Riattivarla richiede di scrivere la flash, e a quel punto si può fare qualsiasi cosa |
+| Il flag `+0x58` torna a 0 | **Rischio basso, non nullo.** Il ME ripeterà probabilmente il passaggio del primo avvio. Atteso dopo Boot Guard off: slot A con `+0x58=01` e CRC `375C`, slot B col record di MFIT invalidato |
+
+**La vulnerabilità vera è un'altra, ed è quella che usiamo.** UEP è protetta **solo da un CRC**, non da una firma: fra la ricostruzione di controllo e Boot Guard off cambiano 3 byte, profilo e CRC, e nient'altro nell'immagine. Finché la scheda resta in manufacturing mode con FPF non scritti (misurato: `fpf_soc_lock=0`), la radice di fiducia di Boot Guard sta in una zona della flash che chiunque possa scriverla può modificare.
+
+Su questa scheda la flash è scrivibile dal sistema operativo con i permessi di root (`FLMSTR1=ffffffff`, protezione disattivata). Quindi un malware con root potrebbe, in teoria, disattivare Boot Guard o cambiare l'hash della chiave in `+0xA0` e installare un firmware persistente. È la stessa classe di problema del [CVE-2018-4251](https://nvd.nist.gov/vuln/detail/CVE-2018-4251), il manufacturing mode lasciato aperto su alcuni Mac.
+
+Che cosa significa in pratica:
+
+- È un difetto di come il produttore ha chiuso la scheda, non di MFIT. Per noi è ciò che rende possibile coreboot.
+- **Non va chiuso** con End of Manufacturing: scriverebbe i FPF in modo permanente, con la chiave del produttore.
+- Con coreboot lo stesso rischio resta, perché Boot Guard sarà disattivato. La difesa realistica è non dare root a software non fidato, e valutare in seguito la protezione in scrittura del chip.
 
 ### Dati personali
 
@@ -453,6 +485,27 @@ python3 -I tools/analisi-bootguard.py lavoro/out-bgoff.bin
 
 MFIT 18.1 ricostruisce un firmware costruito con la 18.0.5. Tutte le verifiche passano, ma nessuno ha avviato questa combinazione.
 
+### MFIT 18.0 o 18.1
+
+Il 2026-11-08 è stata trovata **MFIT 18.0.10.2285**, la stessa versione usata dall'autore del port, in tre archivi `mfit.part1-3.rar` che contengono solo `mfit.exe`. Firma Authenticode di Intel Corporation **valida**, controfirma del 2024-07-14. Provenienza e hash in [REPLICARE.md](REPLICARE.md#ottenere-mfit).
+
+| | 18.0.10.2285 | 18.1.18.2749 (usata finora) |
+|---|---|---|
+| Ramo | Lo stesso del ME della scheda (18.0.5) | Ramo successivo, pensato anche per Arrow Lake |
+| Provata su X210AI | **Sì**, dall'autore del port e da almeno un altro utente con 165H | No |
+| Data | Firmata a luglio 2024 | Firmata a settembre 2025 |
+| Pacchetto | Solo `mfit.exe`, senza XML di esempio né documentazione | Pacchetto System Tools completo |
+| Correzioni | Meno | Più recenti, non documentate pubblicamente |
+| Fonte | Forum, non Intel | Forum, non Intel |
+
+**Vantaggi di usare la 18.0:** è la combinazione già avviata su questa scheda, quindi toglie il punto aperto più serio prima della scrittura. Appartiene allo stesso ramo del firmware, quindi scrive con più probabilità le strutture nella forma che il ME 18.0.5 si aspetta.
+
+**Svantaggi:** è più vecchia e senza documentazione; il formato della `config.xml` potrebbe essere diverso, quindi la configurazione va estratta di nuovo con la 18.0 e non riusata dalla 18.1.
+
+**Vantaggi della 18.1:** più recente, pacchetto completo, e le verifiche offline passano. **Svantaggi:** nessuno l'ha avviata su questa scheda.
+
+**Decisione proposta:** costruire l'immagine con entrambe e confrontarle. Se le due immagini coincidono, o differiscono solo nei metadati di build (CDMD, FITC), la scelta è indifferente. Se differiscono in UEP o nei moduli, usare quella della 18.0. Comandi in [REPLICARE.md](REPLICARE.md#confronto-con-mfit-180).
+
 ---
 
 ## 9. Ridurre Intel ME
@@ -492,6 +545,23 @@ Nessun modulo ha nomi legati ad AMT: l'immagine è Consumer. Nella configurazion
 | **HECI spento prima del payload** | `DISABLE_HECI1_AT_PRE_BOOT`: il sistema operativo non vede `/dev/mei0` | **Sì, nella build** |
 | **Impostazioni MFIT** | 55 sono in sola lettura, quindi `PttSupported`, `IshSupported` e `FidoSupported` non si cambiano da un dump | Nessuna |
 | **`MngHwStatus`, `PttSupportedFpf`** | Disattivazioni permanenti tramite FPF | **Mai** |
+
+### PTT con HECI spento
+
+Oggi il TPM è spento ([sezione 10](#10-tpm-spento)), quindi la domanda conta solo se si torna indietro con `patches/opzionale/0003`. Sono due cose distinte:
+
+- **HECI** è il canale con cui il sistema operativo parla al ME (`/dev/mei0`). Con `DISABLE_HECI1_AT_PRE_BOOT` coreboot lo spegne **dopo** aver mandato End of Post, tramite la PMC (`cse_final_ready_to_boot` in `cse.c`). Il ME resta acceso.
+- **PTT** è il TPM che gira dentro il ME. Il sistema lo raggiunge con l'interfaccia CRB a `0xFED40000`, non tramite HECI. Col BIOS originale qui risulta proprio così: driver `tpm_crb_acpi`, start method 7.
+
+| Pro | Contro |
+|---|---|
+| Il TPM resta disponibile: requisiti di Windows 11, aggiornamenti garantiti, Windows Hello e BitLocker con chiavi in hardware | Torna l'identificativo che si voleva togliere: l'EK di PTT è certificabile da Intel |
+| Il sistema operativo perde il canale principale verso il ME: meno superficie d'attacco, nessun driver MEI, LMS o DAL | Il firmware del ME, PTT compreso, non si aggiorna più dal sistema. Le correzioni di sicurezza di PTT, come quelle per [TPM-Fail](https://tpm.fail/), arrivano proprio con gli aggiornamenti del ME |
+| Configurazione semplice, già usata in altri port Meteor Lake | Contenuti protetti (PAVP, HDCP 2.x, streaming in alta risoluzione) e forse la decodifica video possono dipendere dal ME via HECI. Da provare con `vainfo` |
+| Reversibile con una build | Windows segnala il dispositivo Intel ME mancante |
+| | La combinazione non è provata su questa scheda: va verificato che PTT risponda anche con HECI spento |
+
+**In sintesi:** HECI spento con PTT acceso è una via di mezzo sensata se serve Windows 11 con TPM. Non risolve il problema dell'identificativo, che resta il motivo per cui il TPM è spento. Quanto pesa la perdita degli aggiornamenti del ME dipende dal produttore: non abbiamo verificato se ne distribuisca per questa scheda. Con coreboot, in ogni caso, il ME si aggiornerebbe solo a mano, ricostruendo la regione con MFIT.
 
 ### Il bit HAP su Meteor Lake
 
@@ -726,7 +796,7 @@ Poi spegnere del tutto, staccare l'alimentatore per almeno 30 secondi e riaccend
 
 ### 6. Scrittura di coreboot
 
-**Solo la regione BIOS:** la ROM ha descriptor e ME vuoti. Usare `output-2/coreboot.rom`, che è la build senza TPM.
+**Solo la regione BIOS:** la ROM ha descriptor e ME vuoti. Usare `output-4/coreboot.rom`, la build senza TPM, oppure `output-3` se si vuole escludere la patch Thunderbolt.
 
 ```sh
 sudo modprobe -r spi_intel_pci spi_intel
@@ -757,7 +827,9 @@ Da verificare, in quest'ordine:
 | Batteria, coperchio, sospensione S3 | Prova manuale |
 | Wi-Fi AX210, Ethernet, audio, HDMI/DP | Prova manuale |
 | Video | `vainfo`, perché `mei_gsc_proxy` può servire alla decodifica |
-| USB-C e Thunderbolt | Instabili anche col BIOS originale |
+| USB-C e Thunderbolt | Patch `0004` inclusa. `lspci -nn` deve mostrare `8086:7ec5`, e `boltctl` il dispositivo collegato. Instabili anche col BIOS originale |
+| Microcode | `dmesg \| grep microcode`: già `0x2b` dal firmware |
+| UEP dopo Boot Guard off | Nuovo dump e `tools/uep.py`: slot A con `+0x58=01` e CRC `375C` |
 
 ### 8. Tornare indietro
 
@@ -847,15 +919,17 @@ Per ognuno: perché conta, come si scopre la risposta e cosa fare se va male.
 
 **Come si verifica:** passo 4, guardando che il sistema parta e che HFSTS1 resti con errore 0.
 
-**Se va male:** T48 col dump originale. Poi cercare una MFIT 18.0.x, confrontando le due immagini prima di scrivere.
+**Se va male:** T48 col dump originale, poi l'immagine della 18.0.10.2285.
+
+**Aggiornamento 2026-11-08:** la 18.0.10.2285 è stata trovata e la firma è valida. Resta da costruire l'immagine e confrontarla ([MFIT 18.0 o 18.1](#mfit-180-o-181)). Se coincide con quella della 18.1 nelle parti funzionali, il dubbio si chiude prima di scrivere.
 
 ### Il byte `0x448058` di UEP
 
-**Il dubbio:** MFIT lo riporta da 1 a 0 e non sappiamo a cosa serva ([analisi](#i-518-byte-in-0x449000)).
+**Il dubbio:** MFIT lo riporta da 1 a 0 e non sappiamo a cosa serva ([analisi](#i-518-byte-in-0x449000)). È accertato che sia l'unica cosa che il ME ha cambiato in UEP rispetto alla fabbrica.
 
 **Perché conta:** è l'unica differenza funzionale, oltre al profilo, rispetto a ciò che il ME ha scritto da solo.
 
-**Come si verifica:** dopo il passo 4, rifare il dump. Se il byte torna a 1 e compare di nuovo una seconda copia in `0x449000`, il ME ha ripetuto lo stesso aggiornamento, ed è un buon segno. Confrontare anche `fw_status`.
+**Come si verifica:** dopo il passo 4, rifare il dump e lanciare `tools/uep.py`. Se lo slot A ha `+0x58=01` con CRC `375C` e lo slot B contiene il record di MFIT invalidato, il ME ha ripetuto lo stesso aggiornamento, ed è un buon segno. Confrontare anche `fw_status`.
 
 **Se va male:** se compaiono errori del ME, T48 col dump originale.
 
@@ -940,8 +1014,8 @@ Per ognuno: perché conta, come si scopre la risposta e cosa fare se va male.
 | Tasti luminosità | Tasti Fn su Linux e Windows |
 | Root port NVMe | Il disco a `00:06.0` compare |
 | Decodifica video senza HECI | `vainfo` |
-| Thunderbolt | Prova dopo il primo avvio, con la patch della review solo se serve |
-| Microcode `0x28` nella ROM, `0x2b` nel sistema | `dmesg \| grep microcode` |
+| Thunderbolt | Patch `0004` inclusa: prova con un dispositivo. Se peggiora, ROM `output-3` senza la patch |
+| Microcode | Risolto: la ROM contiene `0x2b` |
 | `tools/build.sh` da zero | Eseguirlo su una cartella pulita |
 
 ---

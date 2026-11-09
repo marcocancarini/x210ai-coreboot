@@ -17,6 +17,8 @@ Dati raccolti il 2026-11-06 sulla scheda, con BIOS AMI 0.5, ME 18.0.5.2098 e Cor
 | VBT | Identico a `data.vbt` del port | Nessuna patch necessaria |
 | Wi-Fi | AX210 | L'autore ha RTL8822BE |
 | NVMe | `00:06.0` | Da confrontare con la root port nel primo avvio |
+| Thunderbolt | `00:07.0` con ID `8086:7ec5`, DMA0 e DMA1 attivi, due domini | ID di **TBT RP1**, non RP0 |
+| Microcode | BIOS `0x1c`, dopo Linux `0x2b` | Da `dmesg`: "Updated early from: 0x0000001c" |
 
 ## Compatibilità del T48
 
@@ -36,10 +38,10 @@ Stato verificato sul commit `f0877e0d3c` e sulla CL 94886, ferma dal 2026-09-08 
 | S3 | Risolto: `INTEL_TME` disattivato | Nessuna azione |
 | Tasti luminosità | Mancavano `_Q06` e `_Q07` | **Patch inclusa**. Dal DSDT originale: `_Q06` abbassa, `_Q07` alza |
 | TPM | Il port non lo configurava | **Lasciato spento di proposito** dal 2026-11-07: [motivi](GUIDA.md#10-tpm-spento). Patch in `patches/opzionale/` |
-| Thunderbolt | La review propone `rp1` e `pmc_mux`, funziona solo a volte | **Non applicata:** col BIOS originale qui la porta è `07.0`, cioè `rp0` |
+| Thunderbolt | Il port abilita `rp0`, la review propone `rp1` e `pmc_mux` | **Patch `0004` inclusa.** La conclusione precedente era sbagliata: col BIOS originale la porta in `07.0` ha ID `8086:7ec5`, che è **RP1**. Compare in `07.0` perché RP0 è spento e la funzione viene rimappata. RP1 corrisponde alla porta TCSS 1 e a DMA0 |
 | USB-C intermittente | Aperto, anche col BIOS originale | Da osservare |
 | Root port PCIe non trovata | Aperto | Da provare |
-| Microcode | ROM con `0x28`, sistema con `0x2b` | Linux lo aggiorna con ogni probabilità; da includere in una build futura |
+| Microcode | Non è un bug: il fork fissa `microcode-20260512` (`0x28`), il pacchetto `intel-ucode` 20260925 ha `0x2b` | **Risolto:** build con `microcode-20260925`, ROM con `0x2b`. Il BIOS originale carica `0x1c` (2024-01-03), che Linux porta a `0x2b` all'avvio |
 
 ## Immagine Boot Guard off
 
@@ -49,8 +51,10 @@ Costruita con MFIT 18.1.18.2749, mai scritta.
 - La modifica in sé è di 3 byte nella struttura `$UEP` a `0x448000`: `0x448053` passa da `0xD8` a `0x18`, gli altri due sembrano un checksum. Interpretazione dedotta dai byte.
 - MFIT riscrive comunque altri dati del ME, circa 4.670 byte in 12 blocchi, soprattutto metadati di build in `CDMD`.
 - Riscomponendo la ricostruzione di controllo, i moduli firmware risultano uguali e la config cambia solo nell'etichetta dell'harness (`#70` diventa `#88`).
-- I 518 byte in `0x449000` sono una vecchia copia di UEP che MFIT azzera, e il dump differisce anche per il byte `0x448058`: [analisi](GUIDA.md#modifiche-di-mfit).
-- **Punti aperti:** funzione di `0x448058`, e la 18.1 non è provata su questa scheda. L'autore ha usato la 18.0.10.2285.
+- I 518 byte in `0x449000` sono lo slot B di UEP: il record di fabbrica, invalidato dal ME quando ha alzato il flag `0x448058`. MFIT lo cancella. Non è un errore né una vulnerabilità in sé: [analisi](GUIDA.md#i-518-byte-in-0x449000).
+- Il "checksum" di UEP è un **CRC-16/CCITT-FALSE** sui byte `+0x06`-`+0x208`, verificato su quattro record. Nessuna firma: è la ragione per cui Boot Guard si disattiva senza chiavi finché i FPF non sono scritti.
+- Verifica offline del 2026-11-08 con `tools/uep.py` e `analisi-bootguard.py`: in `out-bgoff.bin` profilo `0x18`, CRC corretto, catena KM, BPM e IBB ancora valida, config diversa dal dump solo in `BtGuardProfileConfig`. Il dump attuale coincide con quello da cui è costruita.
+- **Punti aperti:** funzione di `0x448058`, e la 18.1 non è provata su questa scheda. L'autore ha usato la 18.0.10.2285, ora trovata con firma valida ma non ancora eseguita qui: [confronto](GUIDA.md#mfit-180-o-181).
 
 ## Decisioni sul ME
 
@@ -66,4 +70,17 @@ Obiettivo aggiornato il 2026-11-07: **TPM spento** e ME ridotto al minimo. La ta
 
 ## Heads
 
-Non per ora. Non esiste una scheda X210AI, il kernel delle schede Meteor Lake non ha btrfs e qui `/boot` è su btrfs, non avvia Windows, ed esclude edk2 nella stessa immagine. Il riferimento è `novacustom-v540tu`.
+Rivalutato il 2026-11-08: **no, e il motivo ora è più forte di prima.** Il riferimento resta `novacustom-v540tu`, l'unica scheda Meteor Lake in Heads.
+
+| Requisito di Heads | Qui | Conseguenza |
+|---|---|---|
+| Un TPM: Heads sigilla i segreti e misura il boot col TPM (TOTP/HOTP) | **TPM spento** dal 2026-11-07 | Senza TPM resta poco più di un bootloader. È la ragione decisiva |
+| Kernel della scheda: `linux-novacustom-common.config`, Linux 6.1.8 | `CONFIG_TCG_CRB` non impostato, solo TIS | Anche tornando a PTT, che usa CRB, il TPM non sarebbe visto senza cambiare il kernel |
+| Filesystem di `/boot` | Stesso kernel senza `CONFIG_BTRFS_FS`, qui `/boot` è su btrfs | Servirebbe una partizione `/boot` ext4 o un kernel modificato |
+| Avvio via `kexec` | Windows non si avvia con `kexec` | Windows andrebbe tolto da questa macchina |
+| Nessuna scheda X210AI | Port non accettato upstream | Andrebbe scritta una scheda Heads e mantenuta a parte |
+| `v540tu` usa un TPM discreto e un `me.bin` di Dasharo | PTT nel ME, ME del produttore | Nulla da riusare direttamente |
+
+Quando riconsiderarlo: solo se si rinuncia a Windows su questa macchina e si torna a un TPM. Anche allora conviene aspettare che il port sia accettato upstream.
+
+Nota a margine: la config coreboot di `v540tu` imposta `CONFIG_HAVE_INTEL_ME_HAP=y` su Meteor Lake. È un indizio utile per il bit HAP, ancora non confermato qui, ma il valore viene dal `me.bin` di Dasharo e non dal nostro.

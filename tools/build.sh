@@ -9,6 +9,12 @@ FORK_COMMIT="$(sed -n 's/^fork_commit=//p' "$QUI/config/versioni.txt")"
 cd "$DEST"
 git checkout -q "$FORK_COMMIT"
 git submodule update --init --checkout
+# Microcode piu' recente del commit fissato dal fork (0x28 -> 0x2b per 06-aa-04).
+# Va messo nell'indice, altrimenti il Makefile di coreboot riporta il submodule indietro.
+UCODE_TAG="$(sed -n 's/^microcode_tag=//p' "$QUI/config/versioni.txt")"
+git -C 3rdparty/intel-microcode fetch -q origin tag "$UCODE_TAG"
+git -C 3rdparty/intel-microcode checkout -q "$UCODE_TAG"
+git add 3rdparty/intel-microcode
 git apply --check "$QUI"/patches/*.patch && git apply "$QUI"/patches/*.patch
 # nasm.us puo' non rispondere: si usa il mirror di coreboot, buildgcc controlla il checksum.
 [ -f util/crossgcc/tarballs/nasm-3.02.tar.bz2 ] || curl -sS --fail -o util/crossgcc/tarballs/nasm-3.02.tar.bz2 \

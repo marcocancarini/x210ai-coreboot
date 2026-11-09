@@ -1,8 +1,10 @@
 fork=https://github.com/WheeledCord/coreboot-x210ai
 fork_commit=f0877e0d3c675c13aff2552967efe491bc6a15b7
 fsp_commit=7cb9638a8d2233017fcc37e446bc8656bb27e92e
-microcode_commit=98f8d817ca3d560c48ae988bd805d1b53b48a631
+microcode_tag=microcode-20260925
+microcode_commit=bdc92abe5c499c3fd7988b76a128d05c9120a520
 edk2_repo=https://github.com/mrchromebox/edk2
 edk2_commit=ac7f573852a6e17de85c76070ded2ddd6705291d
 gcc=15.2.0 binutils=2.46.1 nasm=3.02 iasl=20251212
-rom_sha256=9984db5e…
+rom_sha256=a606563b…
+rom_sha256_senza_thunderbolt=ecc0d05c…

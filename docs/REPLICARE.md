@@ -12,6 +12,7 @@ Lo script clona il fork al commit previsto, applica le patch, compila la toolcha
 
 - `nasm-3.02` da `www.coreboot.org/releases/crossgcc-sources/`, perché nasm.us non rispondeva. `buildgcc` ne verifica il checksum.
 - Pulizia del clone annidato di `openssl` in `libspdm`, dove `fuzz/corpora` blocca il checkout dei sottomoduli.
+- Microcode portato al tag `microcode-20260925` (`06-aa-04` revisione `0x2b`). Il submodule va aggiunto all'indice con `git add`: altrimenti il Makefile di coreboot, alla voce "Updating git submodules", lo riporta al commit fissato dal fork e la ROM esce di nuovo con `0x28`.
 
 Lo script raccoglie i passaggi fatti a mano, ma non è stato rieseguito da zero. La toolchain richiede dipendenze standard: `gcc`, `g++`, `make`, `bison`, `flex`, `m4`, `nasm`, `iasl`, ncurses, zlib, uuid, openssl, gmp, mpfr.
 
@@ -42,6 +43,17 @@ python3 -m venv venv && venv/bin/pip install signify
 venv/bin/python -I tools/verifica-firma.py mfit.exe
 ```
 
+**MFIT 18.0.10.2285**, trovata il 2026-11-08 in tre archivi, `mfit.part1.rar`, `part2` e `part3`, da una fonte non Intel. Contengono solo `mfit.exe`.
+
+| File | SHA-256 |
+|---|---|
+| `mfit.part1.rar` | `f2e44dd33796fe22f48f4a0c8ee1188b05590ea2286091abaf60ac0dae3d314f` |
+| `mfit.part2.rar` | `3fd0050956e91fa40d79c5a3eccdf9dd0ccac2e38ef73ed470d468005a19824a` |
+| `mfit.part3.rar` | `0fa7ebb2af14699b37dff3c992d888484945874d890772bc8b9076a199697b0d` |
+| `mfit.exe` 18.0.10.2285 | `ae2aa2bb97e2fa6ccc666ea46af270ca95a034a6a2af7c98b8249c11849d66d0` |
+
+Firma `OK`, `CN=Intel Corporation`, certificato Sectigo valido dal 2024-03-13 al 2025-03-13, controfirma del 2024-07-14.
+
 **Controllo:** esito `OK` e firmatario `CN=Intel Corporation`. Usare solo `mfit.exe`: il `mfit` per Linux del pacchetto non è firmato, e gli altri file non sono stati verificati. L'archivio è passato per le mani di un tecnico, come mostra il `fit.log` rimasto dentro: la firma protegge solo il singolo eseguibile.
 
 ## Immagine con Boot Guard disattivato
@@ -60,6 +72,31 @@ Per `partizioni-me.py` serve anche un'immagine di controllo: stessa build con `c
 
 **Controllo:** riscomporre `out-bgoff.bin` deve mostrare `BtGuardProfileConfig value="Boot Guard Disabled"`.
 
+```sh
+python3 -I tools/uep.py lavoro/fresh1.bin lavoro/out-controllo.bin lavoro/out-bgoff.bin
+```
+
+Atteso per `out-bgoff.bin`: slot A valido, CRC `a779` corretto, profilo `18`, flag `00`, slot B vuoto.
+
+### Confronto con MFIT 18.0
+
+Non ancora eseguito. Si ripetono gli stessi passi in una cartella nuova, estraendo la configurazione con la 18.0 e senza riusare quella della 18.1:
+
+```sh
+M18=/percorso/di/mfit-18.0.10.2285.exe
+mkdir lavoro-18.0 && cp fresh1.bin lavoro-18.0/
+tools/mfit-sandbox.sh $M18 lavoro-18.0 --decompose fresh1.bin --saveconfig config.xml
+cp lavoro-18.0/config.xml lavoro-18.0/config-bg.xml
+sed -i 's/<BtGuardProfileConfig value="Debug Profile"/<BtGuardProfileConfig value="Boot Guard Disabled"/' lavoro-18.0/config-bg.xml
+tools/mfit-sandbox.sh $M18 lavoro-18.0 --decompose fresh1.bin --loadconfig config.xml --build out-controllo.bin
+tools/mfit-sandbox.sh $M18 lavoro-18.0 --decompose fresh1.bin --loadconfig config-bg.xml --build out-bgoff.bin
+python3 -I tools/partizioni-me.py lavoro-18.0/fresh1.bin lavoro-18.0/out-controllo.bin lavoro-18.0/out-bgoff.bin
+python3 -I tools/uep.py lavoro-18.0/out-bgoff.bin
+python3 -I tools/confronta-regioni.py lavoro/out-bgoff.bin lavoro-18.0/out-bgoff.bin
+```
+
+Come leggere il risultato: differenze solo in CDMD, FITC e nei metadati di build vogliono dire che le due versioni sono equivalenti. Differenze in UEP o nei moduli del firmware vogliono dire che conviene usare l'immagine della 18.0.
+
 ## Strumenti
 
 | Script | A cosa serve |
@@ -72,5 +109,6 @@ Per `partizioni-me.py` serve anche un'immagine di controllo: stessa build con `c
 | `analisi-bootguard.py` | Catena di Boot Guard da un dump e stato del ME, senza stampare dati della macchina |
 | `confronta-regioni.py` | Differenze tra due immagini, regione per regione |
 | `partizioni-me.py` | Partizioni del ME e blocchi cambiati |
+| `uep.py` | I due slot di UEP: firma, CRC, profilo di Boot Guard, flag `+0x58` e stato atteso dopo il primo avvio |
 | `vbt-info.py` | Controllo di un VBT |
 | `acpi-tpm2.py` | Tipo di TPM dalla tabella ACPI, da un `acpidump` del BIOS originale |

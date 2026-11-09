@@ -19,7 +19,7 @@ Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.co
 
 | Percorso | Cosa contiene |
 |---|---|
-| `patches/` | Patch sul fork: tasti luminosità. In `opzionale/`, non applicate: spegnimento di PTT nel ME e ritorno al TPM |
+| `patches/` | Patch sul fork: tasti luminosità, Thunderbolt su RP1. In `opzionale/`, non applicate: spegnimento di PTT nel ME e ritorno al TPM |
 | `config/` | `coreboot.config` completa, `x210ai.defconfig` minima, `versioni.txt` con i commit esatti |
 | `tools/` | Script di lettura, sandbox MFIT, verifica della firma, build, analisi di descriptor, Boot Guard, ME, VBT e tabella TPM |
 

@@ -1,0 +1,57 @@
+diff --git a/src/mainboard/51nb/x210ai/Kconfig b/src/mainboard/51nb/x210ai/Kconfig
+index d5b329ccc4..b97126a689 100644
+--- a/src/mainboard/51nb/x210ai/Kconfig
++++ b/src/mainboard/51nb/x210ai/Kconfig
+@@ -6,6 +6,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	def_bool y
+ 	select BOARD_ROMSIZE_KB_32768
+ 	select CONSOLE_CBMEM
++	select DRIVERS_INTEL_PMC
+ 	select FSP_TYPE_IOT
+ 	select HAVE_ACPI_RESUME
+ 	select HAVE_ACPI_TABLES
+diff --git a/src/mainboard/51nb/x210ai/devicetree.cb b/src/mainboard/51nb/x210ai/devicetree.cb
+index 501da1d388..5a1cbefade 100644
+--- a/src/mainboard/51nb/x210ai/devicetree.cb
++++ b/src/mainboard/51nb/x210ai/devicetree.cb
+@@ -89,22 +89,36 @@ chip soc/intel/meteorlake
+ 			}"
+ 		end
+ 
+-		# usb4 / thunderbolt
+-		device ref tbt_pcie_rp0 on end
++		# usb4 / thunderbolt: the stock bios exposes 8086:7ec5 (tbt rp1),
++		# remapped to 07.0 because rp0 is off; rp1 belongs to tcss port 1 / dma0
++		device ref tbt_pcie_rp1 on end
+ 		device ref tcss_xhci on
+-			register "tcss_ports[0]" = "TCSS_PORT_DEFAULT(OC_SKIP)"
++			register "tcss_ports[1]" = "TCSS_PORT_DEFAULT(OC_SKIP)"
+ 			chip drivers/usb/acpi
+ 				device ref tcss_root_hub on
+ 					chip drivers/usb/acpi
+ 						register "desc" = ""USB Type-C""
+ 						register "type" = "UPC_TYPE_C_USB2_SS_SWITCH"
+-						device ref tcss_usb3_port0 on end
++						device ref tcss_usb3_port1 on end
+ 					end
+ 				end
+ 			end
+ 		end
+ 		device ref tcss_dma0 on end
+ 
++		# type-c mux: HS08 + tcss port 1 (exposes INTC105C for the os)
++		device ref pmc hidden
++			chip drivers/intel/pmc_mux
++				device generic 0 on
++					chip drivers/intel/pmc_mux/conn
++						use usb2_port8 as usb2_port
++						use tcss_usb3_port1 as usb3_port
++						device generic 0 alias conn0 on end
++					end
++				end
++			end
++		end
++
+ 		device ref smbus on end
+ 	end
+ end
