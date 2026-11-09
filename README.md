@@ -33,3 +33,12 @@ Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.co
 2. **Non usare l'immagine Boot Guard di qualcun altro:** solo quella ricavata dal proprio dump.
 3. **Non eseguire mai End of Manufacturing** (`MEManuf` o simili) e non toccare `MngHwStatus`.
 4. **Non scrivere nulla senza un recupero provato:** chip a 1,8 V, mai programmatori a 3,3 V.
+
+## Licenza
+
+Script, patch e documentazione di questa repo sono distribuiti con licenza [GPL-2.0](LICENSE), la stessa di coreboot.
+
+Restano dei rispettivi autori, con le loro condizioni:
+
+- il port di partenza, [WheeledCord/coreboot-x210ai](https://github.com/WheeledCord/coreboot-x210ai), su cui si applicano le patch;
+- il software Intel citato (MFIT, FSP, microcode), che qui non è incluso.
