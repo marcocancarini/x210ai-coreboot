@@ -37,13 +37,18 @@ def slot(d, off):
             % (stato, stored, 'ok' if stored == calc else 'ERRATO (calcolato %04x)' % calc, r[0x53], r[0x58]))
 
 
-for path in sys.argv[1:]:
-    d = open(path, 'rb').read()
-    print(path)
-    print('  slot A 0x448000:', slot(d, UEP))
-    print('  slot B 0x449000:', slot(d, UEP + SLOT))
-    a = bytearray(d[UEP:UEP + LEN])
-    if a[:4] == b'$UEP' and a[0x58] == 0:
-        a[0x58] = 1
-        print('  se il ME ripete l\'aggiornamento: slot A con +0x58=01 e CRC %04x,'
-              ' slot B = slot A attuale con firma azzerata' % crc16(a[6:]))
+def main():
+    for path in sys.argv[1:]:
+        d = open(path, 'rb').read()
+        print(path)
+        print('  slot A 0x448000:', slot(d, UEP))
+        print('  slot B 0x449000:', slot(d, UEP + SLOT))
+        a = bytearray(d[UEP:UEP + LEN])
+        if a[:4] == b'$UEP' and a[0x58] == 0:
+            a[0x58] = 1
+            print('  se il ME ripete l\'aggiornamento: slot A con +0x58=01 e CRC %04x,'
+                  ' slot B = slot A attuale con firma azzerata' % crc16(a[6:]))
+
+
+if __name__ == '__main__':
+    main()

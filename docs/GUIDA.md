@@ -786,9 +786,13 @@ Seguire la [sezione 6](#6-dump-col-t48-e-pogo-pin). Dall'interno si può flashar
 
 ### 3. Immagine con Boot Guard disattivato
 
-Ripetere il dump poco prima, così l'immagine contiene i dati attuali, e costruire l'immagine come nella [sezione 8](#8-il-passaggio-in-mfit).
+Ripetere il dump poco prima, così l'immagine contiene i dati attuali, e costruire l'immagine con MFIT 18.0 ([perché](#mfit-180-o-181)). Lo script fa build e controlli della [sezione 8](#8-il-passaggio-in-mfit) in un solo passo, in una cartella nuova:
 
-**Controllo:** quelli della sezione 8.
+```sh
+tools/prepara-bgoff.sh /percorso/di/tools-18.0/estratto/mfit.exe /percorso/di/backup/fresh1.bin bgoff-$(date +%Y%m%d)
+```
+
+**Controllo:** lo script termina con `ESITO: tutti i 16 controlli superati` e stampa i comandi per scrivere. Se si ferma con `FERMO`, non scrivere niente. Tra i controlli: fuori dal ME nulla cambia, in UEP cambiano solo i 3 byte del profilo, MFIT tocca solo i blocchi attesi, la catena di Boot Guard resta valida e l'immagine risulta costruita con la 18.0.10.2285.
 
 ### 4. Scrittura di Boot Guard off
 
@@ -1036,7 +1040,7 @@ Per ognuno: perché conta, come si scopre la risposta e cosa fare se va male.
 | Decodifica video senza HECI | `vainfo` |
 | Thunderbolt | Patch `0004` inclusa: prova con un dispositivo. Se peggiora, ROM `output-3` senza la patch |
 | Microcode | Risolto: la ROM contiene `0x2b` |
-| `tools/build.sh` da zero | Eseguirlo su una cartella pulita |
+| `tools/build.sh` da zero | Risolto il 2026-11-11: ROM identica a `output-4` nello stesso percorso di build ([dettagli](REPLICARE.md#build-di-coreboot)) |
 
 ---
 

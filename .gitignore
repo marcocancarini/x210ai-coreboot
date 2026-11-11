@@ -12,3 +12,4 @@ config-*.xml
 backup/
 lavoro/
 coreboot/
+__pycache__/

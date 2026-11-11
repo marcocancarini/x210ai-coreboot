@@ -14,9 +14,11 @@ Lo script clona il fork al commit previsto, applica le patch, compila la toolcha
 - Pulizia del clone annidato di `openssl` in `libspdm`, dove `fuzz/corpora` blocca il checkout dei sottomoduli.
 - Microcode portato al tag `microcode-20260925` (`06-aa-04` revisione `0x2b`). Il submodule va aggiunto all'indice con `git add`: altrimenti il Makefile di coreboot, alla voce "Updating git submodules", lo riporta al commit fissato dal fork e la ROM esce di nuovo con `0x28`.
 
-Lo script raccoglie i passaggi fatti a mano, ma non è stato rieseguito da zero. La toolchain richiede dipendenze standard: `gcc`, `g++`, `make`, `bison`, `flex`, `m4`, `nasm`, `iasl`, ncurses, zlib, uuid, openssl, gmp, mpfr.
+**Rieseguito da zero il 2026-11-11**, con clone, toolchain e build nuovi, in circa 50 minuti. Il primo tentativo di build fallisce su `libspdm` come previsto, e lo script lo corregge da solo. La toolchain richiede dipendenze standard: `gcc`, `g++`, `make`, `bison`, `flex`, `m4`, `nasm`, `iasl`, ncurses, zlib, uuid, openssl, gmp, mpfr.
 
 `EDK2_TAG_OR_REV` punta a un branch, `origin/uefipayload_2605`, che può muoversi: il commit usato è in `versioni.txt`. L'hash della ROM può quindi cambiare tra una build e l'altra.
+
+**Riproducibilità:** il 2026-11-11 la ROM è uscita identica bit per bit a `output-4` (`a606563b7b90a9a7e977ceb889c19e41fadc0806ccb2fa95937bae2a71f6e5e9`), ma solo costruendo in `/home/marco/x210ai-coreboot/coreboot`, lo stesso percorso della build originale. edk2 scrive il percorso assoluto di build nei nomi di debug dei moduli. Costruendo altrove cambia solo `fallback/payload`, e le sue stringhe coincidono dopo aver sostituito il percorso. Tutti gli altri file CBFS e la `config` restano identici. Per confrontare l'hash con `versioni.txt` serve quindi lo stesso percorso. Spostando un albero già compilato vanno puliti gli artefatti di BaseTools, con `git -C payloads/external/edk2/workspace/mrchromebox clean -fdx BaseTools`, che conservano il percorso vecchio.
 
 **Controllo sull'immagine:**
 
@@ -108,6 +110,8 @@ Atteso, come il 2026-11-11: `confronta-regioni.py` riporta 4.141 byte diversi ne
 | `lettura.sh` | Stato del ME, Boot Guard, VBT, due letture del chip |
 | `build.sh` | Build completa di coreboot |
 | `mfit-sandbox.sh` | MFIT sotto wine, senza rete, con accesso alla sola cartella di lavoro |
+| `prepara-bgoff.sh` | Da un dump nuovo: build con MFIT 18.0, ricomposizione e tutti i controlli. Si ferma al primo errore e non scrive sul chip |
+| `verifica-bgoff.py` | I 16 controlli sull'immagine Boot Guard off, usati da `prepara-bgoff.sh` |
 | `verifica-firma.py` | Firma Authenticode e firmatario |
 | `descriptor.py` | Regioni e permessi del flash descriptor |
 | `analisi-bootguard.py` | Catena di Boot Guard da un dump e stato del ME, senza stampare dati della macchina |
