@@ -14,6 +14,7 @@ Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.co
 | [docs/GUIDA.md](docs/GUIDA.md) | Guida completa: Boot Guard, chiavi, manufacturing mode, dump, T48, analisi, MFIT, ME, TPM spento, procedura e problemi |
 | [docs/REPLICARE.md](docs/REPLICARE.md) | Come rifare build, immagine MFIT e verifiche |
 | [docs/VERIFICHE.md](docs/VERIFICHE.md) | Cosa è stato misurato sulla scheda, bug noti e decisioni prese |
+| [docs/HEADS.md](docs/HEADS.md) | Variante sperimentale con Heads e TPM: mai costruita in Heads né avviata |
 
 ## Contenuto
 
@@ -21,6 +22,7 @@ Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.co
 |---|---|
 | `patches/` | Patch sul fork: tasti luminosità, Thunderbolt su RP1. In `opzionale/`, non applicate: spegnimento di PTT nel ME e ritorno al TPM |
 | `config/` | `coreboot.config` completa, `x210ai.defconfig` minima, `versioni.txt` con i commit esatti |
+| `heads/` | Variante Heads sperimentale: scheda, config di coreboot e del kernel, script di build |
 | `tools/` | Script di lettura, sandbox MFIT, verifica della firma, build, analisi di descriptor, Boot Guard, ME, VBT e tabella TPM |
 
 ## Cosa non c'è, di proposito

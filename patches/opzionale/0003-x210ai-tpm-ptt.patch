@@ -1,12 +1,12 @@
 diff --git a/src/mainboard/51nb/x210ai/Kconfig b/src/mainboard/51nb/x210ai/Kconfig
-index d5b329ccc4..0ae2874ccf 100644
 --- a/src/mainboard/51nb/x210ai/Kconfig
 +++ b/src/mainboard/51nb/x210ai/Kconfig
-@@ -6,11 +6,15 @@ config BOARD_SPECIFIC_OPTIONS
+@@ -6,12 +6,16 @@
  	def_bool y
  	select BOARD_ROMSIZE_KB_32768
  	select CONSOLE_CBMEM
 +	select CRB_TPM
+ 	select DRIVERS_INTEL_PMC
  	select FSP_TYPE_IOT
  	select HAVE_ACPI_RESUME
  	select HAVE_ACPI_TABLES

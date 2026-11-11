@@ -84,4 +84,6 @@ Rivalutato il 2026-11-08: **no, e il motivo ora è più forte di prima.** Il rif
 
 Quando riconsiderarlo: solo se si rinuncia a Windows su questa macchina e si torna a un TPM. Anche allora conviene aspettare che il port sia accettato upstream.
 
+**Aggiornamento 2026-11-11:** aggiunta come **variante sperimentale**, accanto alla build edk2 che resta la principale. Si accettano il TPM acceso, cioè PTT via CRB, e l'impossibilità di avviare Windows con quella ROM. Kernel con `CONFIG_TCG_CRB` e `CONFIG_BTRFS_FS`, coreboot dal fork con le patch della repo: [docs/HEADS.md](HEADS.md).
+
 Nota a margine: la config coreboot di `v540tu` imposta `CONFIG_HAVE_INTEL_ME_HAP=y` su Meteor Lake. È un indizio utile per il bit HAP, ancora non confermato qui, ma il valore viene dal `me.bin` di Dasharo e non dal nostro.

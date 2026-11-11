@@ -9,7 +9,7 @@ Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è anco
 - MFIT 18.1.18.2749 ottenuto, firma Intel verificata, immagine `out-bgoff.bin` costruita.
 - Coreboot con edk2 compilato, con tasti luminosità, **senza TPM** e con HECI spento. Dal 2026-11-08 anche microcode `0x2b` e patch Thunderbolt (`output-4`).
 - T48 compatibile col chip secondo lista e database.
-- Scelte: **TPM spento** dal 2026-11-07, per ridurre gli identificativi: [motivi e fonti](GUIDA.md#10-tpm-spento). ME acceso, HECI spento. Niente HAP, niente `me_cleaner`. Heads scartato: [motivi](VERIFICHE.md#heads).
+- Scelte: **TPM spento** dal 2026-11-07, per ridurre gli identificativi: [motivi e fonti](GUIDA.md#10-tpm-spento). ME acceso, HECI spento. Niente HAP, niente `me_cleaner`. Heads: scartato per la build principale ([motivi](VERIFICHE.md#heads)), aggiunto il 2026-11-11 come variante sperimentale con TPM ([HEADS.md](HEADS.md)).
 - Si può flashare dall'interno, purché il recupero col T48 sia pronto.
 - Catena di Boot Guard ricalcolata sul dump: hash OEM, KM, BPM e IBB coincidono, firme valide.
 - Confermato dal vivo: FPF non scritti (`fpf_soc_lock=0`).
@@ -20,6 +20,7 @@ Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è anco
 - 2026-11-08: Heads rivalutato e scartato, pro e contro di PTT con HECI spento scritti.
 - 2026-11-11: MFIT 18.0 riscaricata con gli stessi hash ed eseguita. Immagine `out-bgoff.bin` costruita e confrontata con la 18.1: UEP, FITC e moduli identici, ma la 18.0 cambia meno byte e non tocca layout del CSE e CDMD. **Raccomandazione: scrivere l'immagine della 18.0** ([risultato](GUIDA.md#risultato-del-confronto-2026-11-11)). Corretto `tools/mfit-sandbox.sh`, che falliva dal secondo avvio.
 - 2026-11-11: `tools/build.sh` rieseguito da zero. La ROM è identica bit per bit a `output-4` se costruita nello stesso percorso. Altrove cambia solo il percorso scritto da edk2 nel payload: [dettagli](REPLICARE.md#build-di-coreboot).
+- 2026-11-11: variante **Heads sperimentale con TPM** in `heads/`: [docs/HEADS.md](HEADS.md). coreboot della variante compilato fuori da Heads, con microcode identico a `output-4` e 9 MB liberi per l'initrd. Non costruita in Heads: manca Docker. `patches/opzionale/0003` riallineata, prima non si applicava dopo la `0004`.
 - 2026-11-11: `tools/prepara-bgoff.sh` e `verifica-bgoff.py`: build e 16 controlli in un solo comando. Provati sul dump attuale, con la stessa immagine di riferimento, e su 5 casi sbagliati: immagine della 18.1, un bit cambiato nel BIOS o in UEP, MFIT sbagliata, cartella esistente. Tutti fermati.
 
 ## Dove sono i file
@@ -45,6 +46,7 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - [ ] Aprire la macchina, leggere marking e misura del chip.
 - [ ] Prova di lettura col T48 sul chip saldato.
 - [ ] Rifare il dump con `tools/lettura.sh` (root) prima di scrivere.
+- [ ] Installare Docker (root) e lanciare `heads/build-heads.sh`: [docs/HEADS.md](HEADS.md#come-si-costruisce).
 - [ ] `winver` su Windows, e i due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
 - [x] Decidere se committare le modifiche del 2026-11-08 nella repo: committate in `f3285e5`.
 
@@ -60,4 +62,5 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - PTT resta in esecuzione nel ME: la patch `opzionale/0002` lo spegne, ma va provata solo dopo un primo avvio riuscito.
 - Tasti luminosità e NVMe: da verificare al primo avvio.
 - Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile.
+- Heads: build in Heads, misura dell'initrd, `/boot` su btrfs e PTT con HECI spento non provati: [elenco](HEADS.md#cosa-non-è-verificato).
 - Sicurezza: UEP è protetta solo da un CRC e la flash è scrivibile da root. Vale anche con coreboot: [dettagli](GUIDA.md#i-518-byte-in-0x449000).

@@ -1,0 +1,17 @@
+diff --git a/modules/coreboot b/modules/coreboot
+index aaaac701..8fec7b12 100644
+--- a/modules/coreboot
++++ b/modules/coreboot
+@@ -203,6 +203,12 @@ coreboot-mrchromebox-26.03_repo := https://github.com/MrChromebox/coreboot.git
+ coreboot-mrchromebox-26.03_commit_hash := f8244f2508d486d833eb8dee5c0b1d777cf37d39
+ $(eval $(call coreboot_module,mrchromebox-26.03,))
+ 
++# 51NB X210AI, port di Fionn Cassidy non ancora upstream (CL 94886).
++# Toolchain propria: il fork non coincide con nessuna release.
++coreboot-x210ai_repo := https://github.com/WheeledCord/coreboot-x210ai
++coreboot-x210ai_commit_hash := f0877e0d3c675c13aff2552967efe491bc6a15b7
++$(eval $(call coreboot_module,x210ai,))
++
+ # Check that the board configured the coreboot version correctly
+ ifeq "$(CONFIG_COREBOOT_VERSION)" ""
+ 	$(error "$(BOARD): does not specify coreboot version under CONFIG_COREBOOT_VERSION")
