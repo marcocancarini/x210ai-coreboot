@@ -1,6 +1,6 @@
 # Variante Heads, sperimentale
 
-Aggiornato il 2026-11-11. **Mai costruita con Heads, mai avviata.** La build principale resta coreboot con edk2 e senza TPM. Questa è una seconda ROM, da provare solo dopo.
+Aggiornato il 2026-11-11. **Costruita con Heads il 2026-11-11, mai avviata.** La build principale resta coreboot con edk2 e senza TPM. Questa è una seconda ROM, da provare solo dopo.
 
 ## Cos'è
 
@@ -45,12 +45,28 @@ Il 2026-11-11, con la toolchain di coreboot già pronta e senza il container di 
 - Il kernel di Heads con la nostra config esce di **3,2 MB**. Compilato con GCC 16 al posto della toolchain di Heads, quindi la misura è indicativa.
 - Con quel kernel nella ROM restano **9,0 MB** liberi per l'initrd di Heads. La regione BIOS è di 14 MiB e non si può allargare senza cambiare il descriptor, che non va toccato.
 
+## Build in Heads, 2026-11-11
+
+Costruita con `heads/build-heads.sh` nel container ufficiale (`tlaurion/heads-dev-env`, digest fissato da Heads), in circa 35 minuti compresa la prima toolchain.
+
+| | Valore |
+|---|---|
+| ROM | `heads-x210ai-tpm2-sperimentale.rom`, 32 MiB, sha256 `991c9704ccc520a3435918acd3da8e2367e82b4690a783239fc99928166cc104` |
+| Kernel (`bzImage`) | 3,3 MB |
+| Initrd (`initrd.cpio.xz`) | 5,6 MB |
+| Payload in CBFS | 8,9 MB |
+| Spazio libero nella regione BIOS | 3,4 MB |
+| Microcode | Identico a `output-4` |
+| Config dentro la ROM | `CRB_TPM`, `HAVE_INTEL_PTT`, `TPM_MEASURED_BOOT`, `DISABLE_HECI1_AT_PRE_BOOT` |
+
+Due correzioni sono servite per arrivarci, entrambe in `build-heads.sh`. `util/cbmem` del fork non compila con musl perché manca `#include <endian.h>`: si riusa la patch che Heads ha già per il fork MrChromebox. Il container gira come root, quindi a fine build i file tornano all'utente con `chown`.
+
+L'hash cambia con il commit della repo, perché Heads scrive la sua versione nella ROM (`...-dirty`).
+
 ## Cosa non è verificato
 
 | Punto | Perché conta | Come si scopre |
 |---|---|---|
-| Build in Heads | Serve Docker, che su questa macchina non c'è | `heads/build-heads.sh` dopo aver installato Docker |
-| L'initrd ci sta | Se supera 9 MB la ROM non si costruisce | La build lo dice. Se serve, si tolgono moduli come `CONFIG_HOTPKEY` o `CONFIG_LVM2` |
 | `/boot` su btrfs | `/boot` è una cartella nel sottovolume `@`, non una partizione. Heads lo prevede poco: la sua guida supporta ext4 e xfs | Al primo avvio, menu di boot di Heads. In alternativa, una partizione `/boot` ext4 separata |
 | PTT con HECI spento | La combinazione non è mai stata avviata su questa scheda | `tpm2_getcap properties-fixed` dalla shell di Heads |
 | Il kernel 6.1.8 su Meteor Lake | Sulla `v540tu` funziona, su questa scheda mai provato | Primo avvio |
