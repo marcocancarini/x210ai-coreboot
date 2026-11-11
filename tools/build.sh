@@ -1,7 +1,10 @@
 #!/bin/bash
 # Ricostruisce l'immagine: clone del fork, patch, toolchain, build.
-# Uso: [VARIANTE=tpm] build.sh [cartella-destinazione]
-#   VARIANTE=tpm: PTT acceso (patches/opzionale/0003) e config/coreboot-tpm.config
+# Uso: [VARIANTE=tpm] [SENZA_FIX_TB=1] build.sh [cartella-destinazione]
+#   VARIANTE=tpm:   PTT acceso (patches/opzionale/0003) e config/coreboot-tpm.config
+#   SENZA_FIX_TB=1: senza la patch Thunderbolt 0004, la ROM di ripiego
+# Le quattro ROM di rom/: nessuna opzione (edk2-senza-tpm), SENZA_FIX_TB=1,
+# VARIANTE=tpm (edk2-con-tpm), VARIANTE=tpm SENZA_FIX_TB=1.
 set -eu
 QUI="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${1:-$PWD/coreboot}"
@@ -16,7 +19,12 @@ UCODE_TAG="$(sed -n 's/^microcode_tag=//p' "$QUI/config/versioni.txt")"
 git -C 3rdparty/intel-microcode fetch -q origin tag "$UCODE_TAG"
 git -C 3rdparty/intel-microcode checkout -q "$UCODE_TAG"
 git add 3rdparty/intel-microcode
-git apply --check "$QUI"/patches/*.patch && git apply "$QUI"/patches/*.patch
+PATCH=("$QUI"/patches/*.patch)
+if [ "${SENZA_FIX_TB:-}" = 1 ]; then
+  PATCH=("${PATCH[@]/*0004-x210ai-thunderbolt-rp1.patch}")
+  PATCH=($(printf "%s\n" "${PATCH[@]}" | grep .))
+fi
+git apply --check "${PATCH[@]}" && git apply "${PATCH[@]}"
 CONFIG="$QUI/config/coreboot.config"
 if [ "${VARIANTE:-}" = tpm ]; then
   git apply "$QUI/patches/opzionale/0003-x210ai-tpm-ptt.patch"

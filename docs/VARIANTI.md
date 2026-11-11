@@ -9,11 +9,12 @@ Aggiornato il 2026-11-11. **Nessuna delle tre è mai stata scritta sul chip.** V
 | coreboot + edk2 | `rom/edk2-senza-tpm` | `a606563b…` | Spento | Sì, aggiornamenti delle versioni non garantiti | Sì |
 | coreboot + edk2, senza fix Thunderbolt | `rom/edk2-senza-tpm-senza-fix-thunderbolt` | `ecc0d05c…` | Spento | Come sopra | Sì. Ripiego se USB-C o Thunderbolt peggiorano con la patch `0004` |
 | coreboot + edk2 con TPM | `rom/edk2-con-tpm` | `774d484b…` | PTT, boot misurato | Sì, con BitLocker e aggiornamenti | Sì |
+| coreboot + edk2 con TPM, senza fix Thunderbolt | `rom/edk2-con-tpm-senza-fix-thunderbolt` | `392aa100…` | PTT, boot misurato | Come sopra | Sì. Ripiego della versione con TPM |
 | coreboot + Heads | `rom/heads-con-tpm-sperimentale` | `991c9704…` | PTT, boot misurato | **No** | Sì, verificato da Heads |
 
-Hash completi in `config/rom-conosciute.txt`. Le cartelle stanno in `rom/` nella cartella di lavoro locale, con un `LEGGIMI.txt`. Tutte hanno microcode `0x2b`, tasti luminosità e HECI spento, e tutte tranne una hanno la patch Thunderbolt `0004`. Manca una ROM con TPM e senza fix Thunderbolt.
+Hash completi in `config/rom-conosciute.txt`. Le cartelle stanno in `rom/` nella cartella di lavoro locale, con un `LEGGIMI.txt`. Tutte hanno microcode `0x2b`, tasti luminosità e HECI spento, e la patch Thunderbolt `0004` c'è in tutte tranne le due "senza fix". Le quattro edk2 escono da `tools/build.sh` con `VARIANTE=tpm` e `SENZA_FIX_TB=1`, in tutte le combinazioni.
 
-La ROM edk2 con TPM è la build principale più `patches/opzionale/0003` e il TPM acceso in edk2, con `VARIANTE=tpm tools/build.sh`. La config differisce da quella principale solo nelle voci del TPM. Microcode, FSP-S, VBT e DSDT sono identici a `rom/edk2-senza-tpm`. FSP-M cambia solo perché viene rilocato a un altro indirizzo della CBFS, e il bootblock perché contiene il boot misurato. edk2 include `Tcg2Dxe`, quindi Windows vede il TPM. Il supporto a Secure Boot c'è come nella build principale: chiavi caricate, Secure Boot spento finché non lo si accende.
+La ROM edk2 con TPM è la build principale più `patches/opzionale/0003` e il TPM acceso in edk2, con `VARIANTE=tpm tools/build.sh`. Dal 2026-11-11 la `0003` aggiunge le select del TPM in una seconda definizione di `BOARD_SPECIFIC_OPTIONS`, quindi si applica con o senza la `0004`. Ricompilata con questa versione, `edk2-con-tpm` è uscita identica bit per bit. La config differisce da quella principale solo nelle voci del TPM. Microcode, FSP-S, VBT e DSDT sono identici a `rom/edk2-senza-tpm`. FSP-M cambia solo perché viene rilocato a un altro indirizzo della CBFS, e il bootblock perché contiene il boot misurato. edk2 include `Tcg2Dxe`, quindi Windows vede il TPM. Il supporto a Secure Boot c'è come nella build principale: chiavi caricate, Secure Boot spento finché non lo si accende.
 
 Il TPM acceso riporta l'identificativo di PTT, che la build principale toglie ([sezione 10](GUIDA.md#10-tpm-spento)).
 

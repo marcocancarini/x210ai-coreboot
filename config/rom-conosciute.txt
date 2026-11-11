@@ -1,4 +1,5 @@
 a606563b7b90a9a7e977ceb889c19e41fadc0806ccb2fa95937bae2a71f6e5e9 edk2 senza TPM (rom/edk2-senza-tpm)
 ecc0d05cf68fc604ef646be8493006b52507835ea75b7a12cbadc8cf12be94b4 edk2 senza TPM, senza fix Thunderbolt (rom/edk2-senza-tpm-senza-fix-thunderbolt)
 774d484bb734dddb3c48b9f94ca36e61f307ac170742fab26bfca85aaf8f089d edk2 con TPM PTT (rom/edk2-con-tpm)
+392aa1007aa54ef3888b150eaf09579ac1465064cd718f1ee38ece18bab0da14 edk2 con TPM PTT, senza fix Thunderbolt (rom/edk2-con-tpm-senza-fix-thunderbolt)
 991c9704ccc520a3435918acd3da8e2367e82b4690a783239fc99928166cc104 Heads sperimentale con TPM (rom/heads-con-tpm-sperimentale)

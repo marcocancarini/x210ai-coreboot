@@ -1,20 +1,19 @@
 diff --git a/src/mainboard/51nb/x210ai/Kconfig b/src/mainboard/51nb/x210ai/Kconfig
 --- a/src/mainboard/51nb/x210ai/Kconfig
 +++ b/src/mainboard/51nb/x210ai/Kconfig
-@@ -6,12 +6,16 @@
- 	def_bool y
- 	select BOARD_ROMSIZE_KB_32768
- 	select CONSOLE_CBMEM
+@@ -19,6 +19,15 @@
+ 	select SPD_READ_BY_WORD
+ 	select SYSTEM_TYPE_LAPTOP
+ 
++# PTT, il TPM 2.0 dentro il ME, raggiunto via CRB. Definizione a parte di
++# BOARD_SPECIFIC_OPTIONS: Kconfig unisce le select, e la patch si applica
++# con o senza 0004, che tocca le righe in alto.
++config BOARD_SPECIFIC_OPTIONS
 +	select CRB_TPM
- 	select DRIVERS_INTEL_PMC
- 	select FSP_TYPE_IOT
- 	select HAVE_ACPI_RESUME
- 	select HAVE_ACPI_TABLES
 +	select HAVE_INTEL_PTT
- 	select INTEL_GMA_HAVE_VBT
- 	select INTEL_LPSS_UART_FOR_CONSOLE
 +	select MAINBOARD_HAS_TPM2
 +	select MEMORY_MAPPED_TPM
- 	select NO_UART_ON_SUPERIO
- 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
- 	select SOC_INTEL_CRASHLOG
++
+ config MAINBOARD_DIR
+ 	default "51nb/x210ai"
+ 
