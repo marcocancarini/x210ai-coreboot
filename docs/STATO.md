@@ -30,13 +30,17 @@ Dump, immagini ROM, log e software Intel restano fuori dalla repo, in una cartel
 
 ## Prossimi passi
 
+**Heads in pausa dal 2026-11-11.** La ROM è costruita e documentata ([HEADS.md](HEADS.md), [HEADS-METEORLAKE.md](HEADS-METEORLAKE.md)), ma non è nei passi qui sotto. Si prosegue con coreboot ed edk2.
+
+
 1. Copiare i backup dei dump su un disco esterno.
 2. Aprire la macchina e leggere marking e misura del chip: 8×6 o 6×5 mm.
 3. Procurarsi sonda pogo o adattatore WSON-8 della misura giusta e installare Xgpro sul secondo PC. Controllare in Xgpro che le voci `W25Q256JW @WSON8` e `@ISP` indichino 1,8 V.
    Provare la lettura con la sonda sul chip saldato: [sezione 6 della guida](GUIDA.md#6-dump-col-t48-e-pogo-pin).
 4. Rifare il dump con `tools/lettura.sh` e costruire `out-bgoff.bin` con `tools/prepara-bgoff.sh`, che usa MFIT 18.0 e fa tutti i controlli: [passo 3 della procedura](GUIDA.md#3-immagine-con-boot-guard-disattivato).
 5. Scrivere Boot Guard off, controllare che il BIOS originale parta e che `MSR 0x13A` sia cambiato. Rifare il dump e lanciare `tools/uep.py`.
-6. Scrivere coreboot e fare le prove del passo 7 della [procedura](GUIDA.md#11-procedura-passo-per-passo).
+6. Scegliere la ROM edk2 da scrivere, senza TPM (`output-4`) o con TPM (`output-tpm-1`): [confronto](VARIANTI.md#le-tre-rom).
+7. Scrivere coreboot e fare le prove del passo 7 della [procedura](GUIDA.md#11-procedura-passo-per-passo).
 
 ## Da fare a mano, in locale
 
@@ -48,7 +52,9 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - [ ] Prova di lettura col T48 sul chip saldato.
 - [ ] Rifare il dump con `tools/lettura.sh` (root) prima di scrivere.
 - [x] Installare Docker e lanciare `heads/build-heads.sh`: fatto il 2026-11-11.
-- [ ] `winver` su Windows, e i due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
+- [x] `winver` su Windows: 26H2.
+- [ ] I due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
+- [ ] Su Windows: se BitLocker è attivo, salvare la chiave di ripristino fuori dalla macchina (`manage-bde -protectors -get C:`).
 - [x] Decidere se committare le modifiche del 2026-11-08 nella repo: committate in `f3285e5`.
 
 ## Punti aperti
@@ -63,5 +69,5 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - PTT resta in esecuzione nel ME: la patch `opzionale/0002` lo spegne, ma va provata solo dopo un primo avvio riuscito.
 - Tasti luminosità e NVMe: da verificare al primo avvio.
 - Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile.
-- Heads: `/boot` su btrfs e PTT con HECI spento non provati: [elenco](HEADS.md#cosa-non-è-verificato).
+- Heads, in pausa: `/boot` su btrfs e PTT con HECI spento non provati: [elenco](HEADS.md#cosa-non-è-verificato).
 - Sicurezza: UEP è protetta solo da un CRC e la flash è scrivibile da root. Vale anche con coreboot: [dettagli](GUIDA.md#i-518-byte-in-0x449000).
