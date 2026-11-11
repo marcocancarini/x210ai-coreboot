@@ -35,6 +35,10 @@ rm -rf patches/coreboot-x210ai && mkdir -p patches/coreboot-x210ai
 cp "$QUI/patches/0001-x210ai-luminosita.patch" patches/coreboot-x210ai/0001-x210ai-luminosita.patch
 cp "$QUI/patches/0004-x210ai-thunderbolt-rp1.patch" patches/coreboot-x210ai/0002-x210ai-thunderbolt-rp1.patch
 cp "$QUI/patches/opzionale/0003-x210ai-tpm-ptt.patch" patches/coreboot-x210ai/0003-x210ai-tpm-ptt.patch
+# cbmem va nell'initrd e si compila con musl, che non include <endian.h> da solo:
+# stessa correzione che Heads usa per il fork MrChromebox.
+cp patches/coreboot-mrchromebox-26.03/0001-util-cbmem-Add-endian.h-include-for-musl-compat.patch \
+  patches/coreboot-x210ai/0004-cbmem-endian-musl.patch
 
 # Microcode 0x2b come file esterni: Heads clona il fork senza sottomoduli e
 # il Makefile di coreboot riporterebbe intel-microcode al commit del fork (0x28).
@@ -49,11 +53,15 @@ echo "Albero di Heads pronto in $DEST"
 
 command -v docker >/dev/null || { echo "Docker non trovato: installarlo e rilanciare." >&2; exit 1; }
 # docker_repro.sh usa docker run -ti: senza terminale serve script(1) per avere una PTY.
-if [ -t 0 ]; then
-  ./docker_repro.sh make BOARD="$BOARD"
-else
-  script -qefc "HEADS_DISABLE_USB=1 ./docker_repro.sh make BOARD=$BOARD" /dev/null
-fi
+nel_container() {
+  if [ -t 0 ]; then ./docker_repro.sh "$@"
+  else script -qefc "HEADS_DISABLE_USB=1 ./docker_repro.sh $*" /dev/null; fi
+}
+# Il container gira come root: alla fine si restituiscono i file all'utente.
+ESITO=0
+nel_container make BOARD="$BOARD" || ESITO=$?
+nel_container chown -R "$(id -u):$(id -g)" build crossgcc install packages 2>/dev/null || true
+[ "$ESITO" = 0 ] || { echo "Build di Heads fallita ($ESITO)" >&2; exit "$ESITO"; }
 
 echo
 ls -la "build/x86/$BOARD/"*.rom
