@@ -22,6 +22,7 @@ Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è anco
 - 2026-11-11: `tools/build.sh` rieseguito da zero. La ROM è identica bit per bit a `output-4` se costruita nello stesso percorso. Altrove cambia solo il percorso scritto da edk2 nel payload: [dettagli](REPLICARE.md#build-di-coreboot).
 - 2026-11-11: variante **Heads sperimentale con TPM** in `heads/`: [docs/HEADS.md](HEADS.md). coreboot della variante compilato fuori da Heads, con microcode identico a `output-4` e 9 MB liberi per l'initrd. Costruita in Heads lo stesso giorno: ROM da 32 MiB, 3,4 MB liberi nella regione BIOS, mai avviata. `patches/opzionale/0003` riallineata, prima non si applicava dopo la `0004`.
 - 2026-11-11: terza ROM, **edk2 con TPM** (`output-tpm-1`, `VARIANTE=tpm tools/build.sh`), per avere Windows con BitLocker e aggiornamenti. Ricerca su Windows con Heads: non si avvia direttamente. `tools/cambia-firmware.sh` passa tra le ROM riscrivendo solo `WP_RO`, provato sul chip emulato: [docs/VARIANTI.md](VARIANTI.md).
+- 2026-11-11: controllata la scrittura di coreboot. Le ROM hanno il descriptor vuoto, ma `flashrom --ifd` legge quello del chip. Con il comando della guida, sul chip emulato partendo dal dump, cambia solo la regione BIOS (`0x1200000`-`0x1ffffff`), identica a quella della ROM, per `output-4` e `output-tpm-1`.
 - 2026-11-11: `tools/prepara-bgoff.sh` e `verifica-bgoff.py`: build e 16 controlli in un solo comando. Provati sul dump attuale, con la stessa immagine di riferimento, e su 5 casi sbagliati: immagine della 18.1, un bit cambiato nel BIOS o in UEP, MFIT sbagliata, cartella esistente. Tutti fermati.
 
 ## Dove sono i file
@@ -54,6 +55,7 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - [x] Installare Docker e lanciare `heads/build-heads.sh`: fatto il 2026-11-11.
 - [x] `winver` su Windows: 26H2.
 - [ ] I due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
+- [ ] Salvare la configurazione dei pin del BIOS originale, per la retimer: `sudo sh -c 'cat /sys/kernel/debug/pinctrl/*/pins' > pinctrl-stock.txt`.
 - [ ] Su Windows: se BitLocker è attivo, salvare la chiave di ripristino fuori dalla macchina (`manage-bde -protectors -get C:`).
 - [x] Decidere se committare le modifiche del 2026-11-08 nella repo: committate in `f3285e5`.
 
@@ -68,6 +70,6 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - Versione di Windows da controllare con `winver`: senza TPM gli aggiornamenti di Windows 11 non sono garantiti.
 - PTT resta in esecuzione nel ME: la patch `opzionale/0002` lo spegne, ma va provata solo dopo un primo avvio riuscito.
 - Tasti luminosità e NVMe: da verificare al primo avvio.
-- Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile.
+- Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile. Il 2026-11-11 sono state estratte dal dump 97 tabelle ACPI del BIOS originale: nessuna controlla la retimer, quindi il BIOS la imposta durante l'avvio. `GPP_C18`/`GPP_C19` sono già configurati come `TBT_LSX1`, coerenti con la porta TCSS 1 della patch. Per trovare il GPIO serve la configurazione dei pin lasciata dal BIOS originale (`/sys/kernel/debug/pinctrl`, da root), da confrontare con `gpio.c`.
 - Heads, in pausa: `/boot` su btrfs e PTT con HECI spento non provati: [elenco](HEADS.md#cosa-non-è-verificato).
 - Sicurezza: UEP è protetta solo da un CRC e la flash è scrivibile da root. Vale anche con coreboot: [dettagli](GUIDA.md#i-518-byte-in-0x449000).
