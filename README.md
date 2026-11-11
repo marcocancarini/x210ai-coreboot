@@ -2,7 +2,7 @@
 
 Installazione di coreboot con UEFI (edk2) su X210AI Core Ultra 7 165H: patch, configurazione, strumenti e procedura.
 
-> **Stato al 2026-11-07: nulla è stato scritto sul chip.** L'immagine compila, ma non è mai stata avviata su questa scheda. Prima di scrivere il recupero col T48 deve essere pronto.
+> **Stato al 2026-11-11: nulla è stato scritto sul chip.** L'immagine compila, ma non è mai stata avviata su questa scheda. Prima di scrivere il recupero col T48 deve essere pronto.
 
 Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.com/WheeledCord/coreboot-x210ai), non ancora accettato upstream ([CL 94886](https://review.coreboot.org/c/coreboot/+/94886)).
 

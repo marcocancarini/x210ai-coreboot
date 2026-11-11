@@ -45,7 +45,7 @@ Stato verificato sul commit `f0877e0d3c` e sulla CL 94886, ferma dal 2026-09-08 
 
 ## Immagine Boot Guard off
 
-Costruita con MFIT 18.1.18.2749, mai scritta.
+Costruita con MFIT 18.1.18.2749 e, il 2026-11-11, con la 18.0.10.2285. Mai scritta.
 
 - Descriptor, DevExp2 e BIOS identici al dump.
 - La modifica in sé è di 3 byte nella struttura `$UEP` a `0x448000`: `0x448053` passa da `0xD8` a `0x18`, gli altri due sembrano un checksum. Interpretazione dedotta dai byte.
@@ -54,7 +54,8 @@ Costruita con MFIT 18.1.18.2749, mai scritta.
 - I 518 byte in `0x449000` sono lo slot B di UEP: il record di fabbrica, invalidato dal ME quando ha alzato il flag `0x448058`. MFIT lo cancella. Non è un errore né una vulnerabilità in sé: [analisi](GUIDA.md#i-518-byte-in-0x449000).
 - Il "checksum" di UEP è un **CRC-16/CCITT-FALSE** sui byte `+0x06`-`+0x208`, verificato su quattro record. Nessuna firma: è la ragione per cui Boot Guard si disattiva senza chiavi finché i FPF non sono scritti.
 - Verifica offline del 2026-11-08 con `tools/uep.py` e `analisi-bootguard.py`: in `out-bgoff.bin` profilo `0x18`, CRC corretto, catena KM, BPM e IBB ancora valida, config diversa dal dump solo in `BtGuardProfileConfig`. Il dump attuale coincide con quello da cui è costruita.
-- **Punti aperti:** funzione di `0x448058`, e la 18.1 non è provata su questa scheda. L'autore ha usato la 18.0.10.2285, ora trovata con firma valida ma non ancora eseguita qui: [confronto](GUIDA.md#mfit-180-o-181).
+- 2026-11-11, MFIT 18.0.10.2285 eseguita sullo stesso dump. `out-bgoff.bin` ha UEP, FITC, moduli, descriptor e BIOS identici a quella della 18.1. Cambia 1.274 byte rispetto al dump, contro i 4.674 della 18.1. Non tocca la tabella di layout del CSE a `0x4000` e non aggiunge il record `PMC` in CDMD. Catena KM, BPM e IBB valida; ricomposta, la config differisce dal dump solo nel profilo e nell'harness (`#82`): [risultato](GUIDA.md#risultato-del-confronto-2026-11-11).
+- **Punti aperti:** funzione di `0x448058`. La 18.1 resta non provata su questa scheda, ma la raccomandazione ora è scrivere l'immagine della 18.0, la stessa versione usata dall'autore.
 
 ## Decisioni sul ME
 

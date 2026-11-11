@@ -43,7 +43,7 @@ python3 -m venv venv && venv/bin/pip install signify
 venv/bin/python -I tools/verifica-firma.py mfit.exe
 ```
 
-**MFIT 18.0.10.2285**, trovata il 2026-11-08 in tre archivi, `mfit.part1.rar`, `part2` e `part3`, da una fonte non Intel. Contengono solo `mfit.exe`.
+**MFIT 18.0.10.2285**, trovata il 2026-11-08 in tre archivi, `mfit.part1.rar`, `part2` e `part3`, da una fonte non Intel: allegati al [post #301](https://winraid.level1techs.com/t/intel-cs-management-engine-drivers-firmware-and-tools-for-cs-me-16/89959/301) del thread WinRAID sul CSME 16+. Contengono solo `mfit.exe`. Riscaricati il 2026-11-11 con gli stessi hash.
 
 | File | SHA-256 |
 |---|---|
@@ -80,10 +80,10 @@ Atteso per `out-bgoff.bin`: slot A valido, CRC `a779` corretto, profilo `18`, fl
 
 ### Confronto con MFIT 18.0
 
-Non ancora eseguito. Si ripetono gli stessi passi in una cartella nuova, estraendo la configurazione con la 18.0 e senza riusare quella della 18.1:
+Eseguito il 2026-11-11: [risultato](GUIDA.md#risultato-del-confronto-2026-11-11). Si ripetono gli stessi passi in una cartella nuova, estraendo la configurazione con la 18.0 e senza riusare quella della 18.1:
 
 ```sh
-M18=/percorso/di/mfit-18.0.10.2285.exe
+M18=/percorso/di/tools-18.0/estratto/mfit.exe
 mkdir lavoro-18.0 && cp fresh1.bin lavoro-18.0/
 tools/mfit-sandbox.sh $M18 lavoro-18.0 --decompose fresh1.bin --saveconfig config.xml
 cp lavoro-18.0/config.xml lavoro-18.0/config-bg.xml
@@ -96,6 +96,10 @@ python3 -I tools/confronta-regioni.py lavoro/out-bgoff.bin lavoro-18.0/out-bgoff
 ```
 
 Come leggere il risultato: differenze solo in CDMD, FITC e nei metadati di build vogliono dire che le due versioni sono equivalenti. Differenze in UEP o nei moduli del firmware vogliono dire che conviene usare l'immagine della 18.0.
+
+Atteso, come il 2026-11-11: `confronta-regioni.py` riporta 4.141 byte diversi nel ME in 8 blocchi (`0x4000`, `0x5000`, `0x2a5000`, `0x3a6000`, `0x445000`-`0x447000`, `0x44a000`), e descriptor, DevExp2 e BIOS identici. `uep.py` dà per la 18.0 lo stesso risultato della 18.1. Hash di riferimento: `out-bgoff.bin` della 18.0 `7e2a83d6a15846fbe6e28a7a4e41b082c94191fd2775f87abdde4e4d40652a54`, valido solo per il dump di questa scheda.
+
+**Nota sul sandbox:** fino al 2026-11-08 `mfit-sandbox.sh` teneva il prefisso wine nella cartella di lavoro. Il sandbox si chiude prima che wine salvi il registro, quindi dal secondo avvio MFIT si fermava con `Fatal Python error: _Py_HashRandomization_Init`. Ora il prefisso sta nel `/tmp` del sandbox e viene ricreato a ogni avvio. Se in una cartella di lavoro vecchia è rimasto `.wine`, si può cancellare.
 
 ## Strumenti
 

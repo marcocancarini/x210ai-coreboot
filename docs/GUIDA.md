@@ -40,7 +40,7 @@ La sequenza è la stessa: controllare il manufacturing mode, disattivare Boot Gu
 | `mfit --loadconfig config.xml --build ...` | Nella stessa riga anche `--decompose dump.bin` | È il comando usato qui: la config rimanda ai file estratti dal dump |
 | `flashrom -p internal -w dump_bgdisabled.bin`, chip intero | Solo la regione ME, oppure T48 a macchina spenta | MFIT cambia solo il ME; riscrivere tutto a sistema acceso riporta indietro anche le variabili UEFI |
 | "SPI programmer" generico | T48 a 1,8 V, mai 3,3 V | Il chip è un W25Q256JW |
-| MFIT 18.0.10.2285 | MFIT 18.1.18.2749 costruita; 18.0.10.2285 ora disponibile | La 18.0 è la stessa dell'autore: firma Intel verificata, immagine da costruire. [Confronto](#mfit-180-o-181) |
+| MFIT 18.0.10.2285 | 18.0.10.2285, la stessa dell'autore | Immagini costruite con 18.0 e 18.1: UEP e moduli identici, la 18.0 tocca meno strutture. [Confronto](#mfit-180-o-181) |
 | TPM non provato, "PTT non abilitato" | PTT è attivo col BIOS originale, ma qui viene **tolto di proposito** | Misurato: `PttSupported=Yes`. Motivi nella [sezione 10](#10-tpm-spento) |
 | Provato solo su Linux | Windows da provare per primo | Windows serve su questa macchina |
 | Niente tasti luminosità | `_Q06` e `_Q07` aggiunti | Ricavati dal DSDT originale |
@@ -489,7 +489,7 @@ MFIT 18.1 ricostruisce un firmware costruito con la 18.0.5. Tutte le verifiche p
 
 Il 2026-11-08 è stata trovata **MFIT 18.0.10.2285**, la stessa versione usata dall'autore del port, in tre archivi `mfit.part1-3.rar` che contengono solo `mfit.exe`. Firma Authenticode di Intel Corporation **valida**, controfirma del 2024-07-14. Provenienza e hash in [REPLICARE.md](REPLICARE.md#ottenere-mfit).
 
-| | 18.0.10.2285 | 18.1.18.2749 (usata finora) |
+| | 18.0.10.2285 | 18.1.18.2749 (prima immagine costruita) |
 |---|---|---|
 | Ramo | Lo stesso del ME della scheda (18.0.5) | Ramo successivo, pensato anche per Arrow Lake |
 | Provata su X210AI | **Sì**, dall'autore del port e da almeno un altro utente con 165H | No |
@@ -504,7 +504,25 @@ Il 2026-11-08 è stata trovata **MFIT 18.0.10.2285**, la stessa versione usata d
 
 **Vantaggi della 18.1:** più recente, pacchetto completo, e le verifiche offline passano. **Svantaggi:** nessuno l'ha avviata su questa scheda.
 
-**Decisione proposta:** costruire l'immagine con entrambe e confrontarle. Se le due immagini coincidono, o differiscono solo nei metadati di build (CDMD, FITC), la scelta è indifferente. Se differiscono in UEP o nei moduli, usare quella della 18.0. Comandi in [REPLICARE.md](REPLICARE.md#confronto-con-mfit-180).
+**Criterio fissato prima del confronto:** se le due immagini coincidono, o differiscono solo nei metadati di build (CDMD, FITC), la scelta è indifferente. Se differiscono in UEP o nei moduli, si usa quella della 18.0. Comandi in [REPLICARE.md](REPLICARE.md#confronto-con-mfit-180).
+
+#### Risultato del confronto, 2026-11-11
+
+Le due immagini `out-bgoff.bin` sono state costruite dallo stesso `fresh1.bin`, ognuna con la propria `config.xml`.
+
+| Parte | 18.1 contro 18.0 |
+|---|---|
+| Descriptor, DevExp2, BIOS | Identici |
+| UEP (`0x448000`-`0x44a000`) | **Identica**: slot A con CRC `a779`, profilo `0x18`, flag `00`, slot B vuoto |
+| FITC | Identica |
+| Moduli del firmware | Identici |
+| Intestazioni `$FPT` e BPDT (`0x5000`, `0x2a5000`, `0x3a6000`, `0x445000`, `0x44a000`) | Diverse solo nella versione di MFIT scritta dentro e nel checksum |
+| Tabella di layout del CSE (`0x4000`) | La 18.1 la porta da `0x58` a `0x60` byte e aggiunge 8 byte a zero. **La 18.0 la lascia identica al dump** |
+| CDMD (`0x446000`-`0x447fff`) | La 18.1 aggiunge un record JSON `{"Enabled": "Enabled"}` per `BPDT1/PMC` e sposta il resto. La 18.0 non lo aggiunge |
+
+In totale la 18.0 cambia **1.274 byte** rispetto al dump, la 18.1 **4.674**. Con la 18.0 l'unica differenza funzionale resta il profilo di Boot Guard. Ricomponendo l'immagine della 18.0, la config coincide con quella del dump tranne `BtGuardProfileConfig` e l'etichetta dell'harness (`#70` diventa `#82`). La catena KM, BPM e IBB resta valida.
+
+Secondo il criterio, le due versioni sono **equivalenti nelle parti funzionali**. La 18.1 però riscrive due strutture, il layout del CSE e la CDMD, in una forma che il ME 18.0.5 non ha mai visto. La 18.0 le lascia come le aveva scritte il produttore, ed è anche la versione già avviata su questa scheda. **Raccomandazione: scrivere l'immagine della 18.0.**
 
 ---
 
@@ -921,7 +939,9 @@ Per ognuno: perché conta, come si scopre la risposta e cosa fare se va male.
 
 **Se va male:** T48 col dump originale, poi l'immagine della 18.0.10.2285.
 
-**Aggiornamento 2026-11-08:** la 18.0.10.2285 è stata trovata e la firma è valida. Resta da costruire l'immagine e confrontarla ([MFIT 18.0 o 18.1](#mfit-180-o-181)). Se coincide con quella della 18.1 nelle parti funzionali, il dubbio si chiude prima di scrivere.
+**Aggiornamento 2026-11-08:** la 18.0.10.2285 è stata trovata e la firma è valida.
+
+**Aggiornamento 2026-11-11:** immagine costruita con la 18.0 e confrontata con la 18.1 ([risultato](#risultato-del-confronto-2026-11-11)). UEP, FITC e moduli sono identici. La 18.1 in più riscrive layout del CSE e CDMD, la 18.0 no. Usando l'immagine della 18.0 questo dubbio si chiude: è la stessa combinazione già avviata dall'autore.
 
 ### Il byte `0x448058` di UEP
 

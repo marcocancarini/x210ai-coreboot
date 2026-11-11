@@ -1,6 +1,6 @@
 # Stato del progetto
 
-Aggiornato il 2026-11-08. **Nulla è stato scritto sul chip.** La scheda è ancora col BIOS originale e Boot Guard attivo.
+Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è ancora col BIOS originale e Boot Guard attivo.
 
 ## Fatto
 
@@ -16,8 +16,9 @@ Aggiornato il 2026-11-08. **Nulla è stato scritto sul chip.** La scheda è anco
 - Guida riscritta, con analisi dei dump e dati personali controllati.
 - Confronto con System76: nessun modello Meteor Lake ha moduli ME rimossi, e il ME di questa scheda contiene meno moduli dei loro.
 - 2026-11-08: formato di UEP chiarito (due slot, CRC-16 identificato), i 518 byte spiegati, `tools/uep.py`. Boot Guard off ricontrollato offline.
-- 2026-11-08: MFIT 18.0.10.2285 trovata, firma Intel valida. Immagine non ancora costruita.
+- 2026-11-08: MFIT 18.0.10.2285 trovata, firma Intel valida.
 - 2026-11-08: Heads rivalutato e scartato, pro e contro di PTT con HECI spento scritti.
+- 2026-11-11: MFIT 18.0 riscaricata con gli stessi hash ed eseguita. Immagine `out-bgoff.bin` costruita e confrontata con la 18.1: UEP, FITC e moduli identici, ma la 18.0 cambia meno byte e non tocca layout del CSE e CDMD. **Raccomandazione: scrivere l'immagine della 18.0** ([risultato](GUIDA.md#risultato-del-confronto-2026-11-11)). Corretto `tools/mfit-sandbox.sh`, che falliva dal secondo avvio.
 
 ## Dove sono i file
 
@@ -29,29 +30,28 @@ Dump, immagini ROM, log e software Intel restano fuori dalla repo, in una cartel
 2. Aprire la macchina e leggere marking e misura del chip: 8×6 o 6×5 mm.
 3. Procurarsi sonda pogo o adattatore WSON-8 della misura giusta e installare Xgpro sul secondo PC. Controllare in Xgpro che le voci `W25Q256JW @WSON8` e `@ISP` indichino 1,8 V.
    Provare la lettura con la sonda sul chip saldato: [sezione 6 della guida](GUIDA.md#6-dump-col-t48-e-pogo-pin).
-4. Costruire `out-bgoff.bin` anche con MFIT 18.0 e confrontarla con la 18.1: [comandi](REPLICARE.md#confronto-con-mfit-180).
-5. Rifare il dump e ricostruire `out-bgoff.bin`, che deve partire dai dati attuali.
-6. Scrivere Boot Guard off, controllare che il BIOS originale parta e che `MSR 0x13A` sia cambiato. Rifare il dump e lanciare `tools/uep.py`.
-7. Scrivere coreboot e fare le prove del passo 7 della [procedura](GUIDA.md#11-procedura-passo-per-passo).
+4. Rifare il dump e ricostruire `out-bgoff.bin` con MFIT 18.0, che deve partire dai dati attuali: [comandi](REPLICARE.md#confronto-con-mfit-180).
+5. Scrivere Boot Guard off, controllare che il BIOS originale parta e che `MSR 0x13A` sia cambiato. Rifare il dump e lanciare `tools/uep.py`.
+6. Scrivere coreboot e fare le prove del passo 7 della [procedura](GUIDA.md#11-procedura-passo-per-passo).
 
 ## Da fare a mano, in locale
 
 Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi di root o l'esecuzione di software Intel scaricato.
 
-- [ ] Lanciare MFIT 18.0.10.2285 nel sandbox e confrontare con la 18.1: [comandi](REPLICARE.md#confronto-con-mfit-180). L'esecuzione da Claude è stata bloccata dai permessi il 2026-11-08.
+- [x] Lanciare MFIT 18.0.10.2285 nel sandbox e confrontare con la 18.1: fatto il 2026-11-11.
 - [ ] Copiare i backup dei dump su un disco esterno.
 - [ ] Aprire la macchina, leggere marking e misura del chip.
 - [ ] Prova di lettura col T48 sul chip saldato.
 - [ ] Rifare il dump con `tools/lettura.sh` (root) prima di scrivere.
 - [ ] `winver` su Windows, e i due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
-- [ ] Decidere se committare le modifiche del 2026-11-08 nella repo.
+- [x] Decidere se committare le modifiche del 2026-11-08 nella repo: committate in `f3285e5`.
 
 ## Punti aperti
 
 - Il byte `0x448058` di UEP, che MFIT riporta da 1 a 0: funzione ignota, ma è l'unica cosa che il ME ha cambiato da solo. I 518 byte in `0x449000` sono spiegati: [analisi](GUIDA.md#i-518-byte-in-0x449000).
 - Comportamento del "Debug Profile" se una verifica fallisce: non documentato.
 - Lettura col T48 a chip saldato: non provata.
-- MFIT 18.1 non provato su questa scheda. La 18.0.10.2285 è pronta ma non ancora eseguita.
+- MFIT: le due versioni sono equivalenti nelle parti funzionali. Usando la 18.0 si ripete la combinazione già avviata dall'autore, mentre la 18.1 resta non provata su questa scheda.
 - Windows mai provato su questo port.
 - Tutti i punti aperti sono spiegati nella [sezione 13 della guida](GUIDA.md#13-punti-ancora-da-verificare).
 - Versione di Windows da controllare con `winver`: senza TPM gli aggiornamenti di Windows 11 non sono garantiti.
