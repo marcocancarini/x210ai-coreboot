@@ -18,6 +18,7 @@ Dati raccolti il 2026-11-06 sulla scheda, con BIOS AMI 0.5, ME 18.0.5.2098 e Cor
 | Wi-Fi | AX210 | L'autore ha RTL8822BE |
 | NVMe | `00:06.0` | Da confrontare con la root port nel primo avvio |
 | Thunderbolt | `00:07.0` con ID `8086:7ec5`, DMA0 e DMA1 attivi, due domini | ID di **TBT RP1**, non RP0 |
+| Pin (2026-11-11) | `pinctrl-stock.txt` contro `gpio.c` e `gpio_early.c`: 194 pin uguali, 0 diversi | Nessun GPIO della retimer mancante. Non configurati dal port solo `CNV_BTEN` (uscita 0) e `CNV_BT_IF_SELECT` (uscita 1), del Bluetooth CNVi |
 | Microcode | BIOS `0x1c`, dopo Linux `0x2b` | Da `dmesg`: "Updated early from: 0x0000001c" |
 
 ## Compatibilità del T48

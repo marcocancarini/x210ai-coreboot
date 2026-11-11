@@ -111,6 +111,7 @@ Atteso, come il 2026-11-11: `confronta-regioni.py` riporta 4.141 byte diversi ne
 | `build.sh` | Build completa di coreboot |
 | `mfit-sandbox.sh` | MFIT sotto wine, senza rete, con accesso alla sola cartella di lavoro |
 | `cambia-firmware.sh` | Passa tra le ROM conosciute riscrivendo solo `WP_RO`, conserva variabili UEFI e cache della RAM: [VARIANTI.md](VARIANTI.md) |
+| `confronta-gpio.py` | Configurazione dei pin del BIOS originale (`/sys/kernel/debug/pinctrl`) contro il `gpio.c` del port |
 | `prepara-bgoff.sh` | Da un dump nuovo: build con MFIT 18.0, ricomposizione e tutti i controlli. Si ferma al primo errore e non scrive sul chip |
 | `verifica-bgoff.py` | I 16 controlli sull'immagine Boot Guard off, usati da `prepara-bgoff.sh` |
 | `verifica-firma.py` | Firma Authenticode e firmatario |

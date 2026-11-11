@@ -849,6 +849,7 @@ Da verificare, in quest'ordine:
 | Batteria, coperchio, sospensione S3 | Prova manuale |
 | Wi-Fi AX210, Ethernet, audio, HDMI/DP | Prova manuale |
 | Video | `vainfo`, perché `mei_gsc_proxy` può servire alla decodifica |
+| Bluetooth | `bluetoothctl list` mostra l'adattatore. Se manca, i candidati sono i pin virtuali `CNV_BTEN` e `CNV_BT_IF_SELECT`, che il port non configura |
 | USB-C e Thunderbolt | Patch `0004` inclusa. `lspci -nn` deve mostrare `8086:7ec5`, e `boltctl` il dispositivo collegato. Instabili anche col BIOS originale |
 | Microcode | `dmesg \| grep microcode`: già `0x2b` dal firmware |
 | UEP dopo Boot Guard off | Nuovo dump e `tools/uep.py`: slot A con `+0x58=01` e CRC `375C` |

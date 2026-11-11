@@ -55,7 +55,7 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - [x] Installare Docker e lanciare `heads/build-heads.sh`: fatto il 2026-11-11.
 - [x] `winver` su Windows: 26H2.
 - [ ] I due comandi PowerShell della [sezione 10](GUIDA.md#verifiche).
-- [ ] Salvare la configurazione dei pin del BIOS originale, per la retimer: `sudo sh -c 'cat /sys/kernel/debug/pinctrl/*/pins' > pinctrl-stock.txt`.
+- [x] Salvare la configurazione dei pin del BIOS originale: `backup/pinctrl-stock.txt`, il 2026-11-11.
 - [ ] Su Windows: se BitLocker è attivo, salvare la chiave di ripristino fuori dalla macchina (`manage-bde -protectors -get C:`).
 - [x] Decidere se committare le modifiche del 2026-11-08 nella repo: committate in `f3285e5`.
 
@@ -70,6 +70,6 @@ Lavori che Claude non può fare da qui: richiedono la macchina fisica, permessi 
 - Versione di Windows da controllare con `winver`: senza TPM gli aggiornamenti di Windows 11 non sono garantiti.
 - PTT resta in esecuzione nel ME: la patch `opzionale/0002` lo spegne, ma va provata solo dopo un primo avvio riuscito.
 - Tasti luminosità e NVMe: da verificare al primo avvio.
-- Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile. Il 2026-11-11 sono state estratte dal dump 97 tabelle ACPI del BIOS originale: nessuna controlla la retimer, quindi il BIOS la imposta durante l'avvio. `GPP_C18`/`GPP_C19` sono già configurati come `TBT_LSX1`, coerenti con la porta TCSS 1 della patch. Per trovare il GPIO serve la configurazione dei pin lasciata dal BIOS originale (`/sys/kernel/debug/pinctrl`, da root), da confrontare con `gpio.c`.
+- Thunderbolt: patch `0004` inclusa ma mai avviata. La retimer ha un GPIO di accensione ignoto, quindi può restare instabile. Il 2026-11-11 sono state estratte dal dump 97 tabelle ACPI del BIOS originale: nessuna controlla la retimer, quindi il BIOS la imposta durante l'avvio. `GPP_C18`/`GPP_C19` sono già configurati come `TBT_LSX1`, coerenti con la porta TCSS 1 della patch. Confronto dei pin con `tools/confronta-gpio.py`: 194 pin uguali al BIOS originale, nessuna uscita del BIOS manca nel port. **Non c'è un GPIO della retimer da aggiungere:** o non esiste, o la retimer è comandata dall'EC o dal controller USB-PD. Mancano solo `CNV_BTEN` e `CNV_BT_IF_SELECT`, pin virtuali del Bluetooth CNVi: da controllare al primo avvio.
 - Heads, in pausa: `/boot` su btrfs e PTT con HECI spento non provati: [elenco](HEADS.md#cosa-non-è-verificato).
 - Sicurezza: UEP è protetta solo da un CRC e la flash è scrivibile da root. Vale anche con coreboot: [dettagli](GUIDA.md#i-518-byte-in-0x449000).
