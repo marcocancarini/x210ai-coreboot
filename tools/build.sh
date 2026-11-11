@@ -1,6 +1,7 @@
 #!/bin/bash
 # Ricostruisce l'immagine: clone del fork, patch, toolchain, build.
-# Uso: build.sh [cartella-destinazione]
+# Uso: [VARIANTE=tpm] build.sh [cartella-destinazione]
+#   VARIANTE=tpm: PTT acceso (patches/opzionale/0003) e config/coreboot-tpm.config
 set -eu
 QUI="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${1:-$PWD/coreboot}"
@@ -16,11 +17,16 @@ git -C 3rdparty/intel-microcode fetch -q origin tag "$UCODE_TAG"
 git -C 3rdparty/intel-microcode checkout -q "$UCODE_TAG"
 git add 3rdparty/intel-microcode
 git apply --check "$QUI"/patches/*.patch && git apply "$QUI"/patches/*.patch
+CONFIG="$QUI/config/coreboot.config"
+if [ "${VARIANTE:-}" = tpm ]; then
+  git apply "$QUI/patches/opzionale/0003-x210ai-tpm-ptt.patch"
+  CONFIG="$QUI/config/coreboot-tpm.config"
+fi
 # nasm.us puo' non rispondere: si usa il mirror di coreboot, buildgcc controlla il checksum.
 [ -f util/crossgcc/tarballs/nasm-3.02.tar.bz2 ] || curl -sS --fail -o util/crossgcc/tarballs/nasm-3.02.tar.bz2 \
   https://www.coreboot.org/releases/crossgcc-sources/nasm-3.02.tar.bz2
 env -u MAKEFLAGS /usr/bin/make crossgcc-i386 crossgcc-x64 CPUS="$(nproc)"
-cp "$QUI/config/coreboot.config" .config
+cp "$CONFIG" .config
 env -u MAKEFLAGS /usr/bin/make olddefconfig
 if ! env -u MAKEFLAGS /usr/bin/make -j"$(nproc)"; then
   # Il clone annidato di openssl in libspdm lascia fuzz/corpora non tracciato.

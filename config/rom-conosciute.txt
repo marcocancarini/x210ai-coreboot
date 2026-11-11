@@ -1,0 +1,3 @@
+a606563b7b90a9a7e977ceb889c19e41fadc0806ccb2fa95937bae2a71f6e5e9 coreboot edk2 senza TPM (output-4)
+991c9704ccc520a3435918acd3da8e2367e82b4690a783239fc99928166cc104 Heads sperimentale con TPM (output-heads-1)
+774d484bb734dddb3c48b9f94ca36e61f307ac170742fab26bfca85aaf8f089d coreboot edk2 con TPM PTT (output-tpm-1)
