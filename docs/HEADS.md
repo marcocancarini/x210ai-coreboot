@@ -63,6 +63,8 @@ Due correzioni sono servite per arrivarci, entrambe in `build-heads.sh`. `util/c
 
 L'hash cambia con il commit della repo, perché Heads scrive la sua versione nella ROM (`...-dirty`).
 
+Confronto con le schede Meteor Lake ufficiali di Heads e conseguenze di Boot Guard spento: [HEADS-METEORLAKE.md](HEADS-METEORLAKE.md).
+
 ## Cosa non è verificato
 
 | Punto | Perché conta | Come si scopre |
