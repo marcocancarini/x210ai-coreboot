@@ -41,7 +41,7 @@ Il 2026-11-11, con la toolchain di coreboot già pronta e senza il container di 
 
 - Le tre patch si applicano in ordine sul fork.
 - coreboot compila con `coreboot-x210ai.config`. Sono inclusi i driver CRB e PTT. PTT viene rilevato dal registro TXT, non tramite HECI, quindi spegnere HECI non lo ostacola.
-- Il microcode esterno è identico byte per byte a quello di `output-4`.
+- Il microcode esterno è identico byte per byte a quello di `rom/edk2-senza-tpm`.
 - Il kernel di Heads con la nostra config esce di **3,2 MB**. Compilato con GCC 16 al posto della toolchain di Heads, quindi la misura è indicativa.
 - Con quel kernel nella ROM restano **9,0 MB** liberi per l'initrd di Heads. La regione BIOS è di 14 MiB e non si può allargare senza cambiare il descriptor, che non va toccato.
 
@@ -51,12 +51,12 @@ Costruita con `heads/build-heads.sh` nel container ufficiale (`tlaurion/heads-de
 
 | | Valore |
 |---|---|
-| ROM | `heads-x210ai-tpm2-sperimentale.rom`, 32 MiB, sha256 `991c9704ccc520a3435918acd3da8e2367e82b4690a783239fc99928166cc104` |
+| ROM | `x210ai-heads-con-tpm-sperimentale.rom`, 32 MiB, sha256 `991c9704ccc520a3435918acd3da8e2367e82b4690a783239fc99928166cc104` |
 | Kernel (`bzImage`) | 3,3 MB |
 | Initrd (`initrd.cpio.xz`) | 5,6 MB |
 | Payload in CBFS | 8,9 MB |
 | Spazio libero nella regione BIOS | 3,4 MB |
-| Microcode | Identico a `output-4` |
+| Microcode | Identico a `rom/edk2-senza-tpm` |
 | Config dentro la ROM | `CRB_TPM`, `HAVE_INTEL_PTT`, `TPM_MEASURED_BOOT`, `DISABLE_HECI1_AT_PRE_BOOT` |
 
 Due correzioni sono servite per arrivarci, entrambe in `build-heads.sh`. `util/cbmem` del fork non compila con musl perché manca `#include <endian.h>`: si riusa la patch che Heads ha già per il fork MrChromebox. Il container gira come root, quindi a fine build i file tornano all'utente con `chown`.
@@ -100,7 +100,7 @@ Solo dopo che la build edk2 è partita almeno una volta su questa scheda ([proce
 2. Scrivere solo la regione BIOS:
    ```sh
    sudo modprobe -r spi_intel_pci spi_intel
-   sudo flashrom -p internal --ifd -i bios -N -w heads-x210ai-tpm2-sperimentale.rom
+   sudo flashrom -p internal --ifd -i bios -N -w x210ai-heads-con-tpm-sperimentale.rom
    ```
 3. Spegnere e riaccendere. Al primo avvio Heads chiede di generare le chiavi e il segreto TOTP: seguire la procedura OEM Factory Reset.
 4. Controllare `tpm2_getcap properties-fixed`, la tastiera, lo schermo, il disco NVMe e l'avvio di CachyOS.

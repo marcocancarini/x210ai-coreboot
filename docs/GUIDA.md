@@ -2,7 +2,7 @@
 
 Questa guida parte da quella di Fionn Cassidy, autore del port ([`x210ai.md`](https://github.com/WheeledCord/coreboot-x210ai/blob/x210ai/Documentation/mainboard/51nb/x210ai.md)), e la adatta a questa scheda: Core Ultra 7 165H, ME 18.0.5.2098, pannello 2560x1600, Wi-Fi AX210, Windows e CachyOS sullo stesso disco.
 
-> **Stato al 2026-11-08: nulla è stato scritto sul chip.** Boot Guard è ancora attivo. La ROM da usare è `output-4`: **senza TPM**, microcode `0x2b`, Thunderbolt su RP1 (`output-3` è la stessa senza Thunderbolt). Le analisi sono state fatte sui dump, le scritture dei passi 4 e 6 non sono mai state provate qui.
+> **Stato al 2026-11-08: nulla è stato scritto sul chip.** Boot Guard è ancora attivo. La ROM da usare è `rom/edk2-senza-tpm`: **senza TPM**, microcode `0x2b`, Thunderbolt su RP1 (`rom/edk2-senza-tpm-senza-fix-thunderbolt` è la stessa senza Thunderbolt). Le analisi sono state fatte sui dump, le scritture dei passi 4 e 6 non sono mai state provate qui.
 
 Nel testo, **misurato** indica un dato letto da questa scheda o dai suoi dump, **dedotto** un'interpretazione nostra, **non provato** qualcosa che nessuno ha ancora verificato qui.
 
@@ -818,7 +818,7 @@ Poi spegnere del tutto, staccare l'alimentatore per almeno 30 secondi e riaccend
 
 ### 6. Scrittura di coreboot
 
-**Solo la regione BIOS:** la ROM ha descriptor e ME vuoti. Usare `output-4/coreboot.rom`, la build senza TPM, oppure `output-3` se si vuole escludere la patch Thunderbolt.
+**Solo la regione BIOS:** la ROM ha descriptor e ME vuoti. Usare `rom/edk2-senza-tpm/x210ai-edk2-senza-tpm.rom`, la build senza TPM, oppure `rom/edk2-senza-tpm-senza-fix-thunderbolt` se si vuole escludere la patch Thunderbolt.
 
 ```sh
 sudo modprobe -r spi_intel_pci spi_intel
@@ -1039,9 +1039,9 @@ Per ognuno: perché conta, come si scopre la risposta e cosa fare se va male.
 | Tasti luminosità | Tasti Fn su Linux e Windows |
 | Root port NVMe | Il disco a `00:06.0` compare |
 | Decodifica video senza HECI | `vainfo` |
-| Thunderbolt | Patch `0004` inclusa: prova con un dispositivo. Se peggiora, ROM `output-3` senza la patch |
+| Thunderbolt | Patch `0004` inclusa: prova con un dispositivo. Se peggiora, ROM `rom/edk2-senza-tpm-senza-fix-thunderbolt` senza la patch |
 | Microcode | Risolto: la ROM contiene `0x2b` |
-| `tools/build.sh` da zero | Risolto il 2026-11-11: ROM identica a `output-4` nello stesso percorso di build ([dettagli](REPLICARE.md#build-di-coreboot)) |
+| `tools/build.sh` da zero | Risolto il 2026-11-11: ROM identica a `rom/edk2-senza-tpm` nello stesso percorso di build ([dettagli](REPLICARE.md#build-di-coreboot)) |
 
 ---
 

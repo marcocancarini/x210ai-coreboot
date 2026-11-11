@@ -7,7 +7,7 @@ Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è anco
 - Manufacturing mode confermato: si può procedere.
 - Dump aggiornati, due letture identiche.
 - MFIT 18.1.18.2749 ottenuto, firma Intel verificata, immagine `out-bgoff.bin` costruita.
-- Coreboot con edk2 compilato, con tasti luminosità, **senza TPM** e con HECI spento. Dal 2026-11-08 anche microcode `0x2b` e patch Thunderbolt (`output-4`).
+- Coreboot con edk2 compilato, con tasti luminosità, **senza TPM** e con HECI spento. Dal 2026-11-08 anche microcode `0x2b` e patch Thunderbolt (`rom/edk2-senza-tpm`).
 - T48 compatibile col chip secondo lista e database.
 - Scelte: **TPM spento** dal 2026-11-07, per ridurre gli identificativi: [motivi e fonti](GUIDA.md#10-tpm-spento). ME acceso, HECI spento. Niente HAP, niente `me_cleaner`. Heads: scartato per la build principale ([motivi](VERIFICHE.md#heads)), aggiunto il 2026-11-11 come variante sperimentale con TPM ([HEADS.md](HEADS.md)).
 - Si può flashare dall'interno, purché il recupero col T48 sia pronto.
@@ -19,15 +19,15 @@ Aggiornato il 2026-11-11. **Nulla è stato scritto sul chip.** La scheda è anco
 - 2026-11-08: MFIT 18.0.10.2285 trovata, firma Intel valida.
 - 2026-11-08: Heads rivalutato e scartato, pro e contro di PTT con HECI spento scritti.
 - 2026-11-11: MFIT 18.0 riscaricata con gli stessi hash ed eseguita. Immagine `out-bgoff.bin` costruita e confrontata con la 18.1: UEP, FITC e moduli identici, ma la 18.0 cambia meno byte e non tocca layout del CSE e CDMD. **Raccomandazione: scrivere l'immagine della 18.0** ([risultato](GUIDA.md#risultato-del-confronto-2026-11-11)). Corretto `tools/mfit-sandbox.sh`, che falliva dal secondo avvio.
-- 2026-11-11: `tools/build.sh` rieseguito da zero. La ROM è identica bit per bit a `output-4` se costruita nello stesso percorso. Altrove cambia solo il percorso scritto da edk2 nel payload: [dettagli](REPLICARE.md#build-di-coreboot).
-- 2026-11-11: variante **Heads sperimentale con TPM** in `heads/`: [docs/HEADS.md](HEADS.md). coreboot della variante compilato fuori da Heads, con microcode identico a `output-4` e 9 MB liberi per l'initrd. Costruita in Heads lo stesso giorno: ROM da 32 MiB, 3,4 MB liberi nella regione BIOS, mai avviata. `patches/opzionale/0003` riallineata, prima non si applicava dopo la `0004`.
-- 2026-11-11: terza ROM, **edk2 con TPM** (`output-tpm-1`, `VARIANTE=tpm tools/build.sh`), per avere Windows con BitLocker e aggiornamenti. Ricerca su Windows con Heads: non si avvia direttamente. `tools/cambia-firmware.sh` passa tra le ROM riscrivendo solo `WP_RO`, provato sul chip emulato: [docs/VARIANTI.md](VARIANTI.md).
-- 2026-11-11: controllata la scrittura di coreboot. Le ROM hanno il descriptor vuoto, ma `flashrom --ifd` legge quello del chip. Con il comando della guida, sul chip emulato partendo dal dump, cambia solo la regione BIOS (`0x1200000`-`0x1ffffff`), identica a quella della ROM, per `output-4` e `output-tpm-1`.
+- 2026-11-11: `tools/build.sh` rieseguito da zero. La ROM è identica bit per bit a `rom/edk2-senza-tpm` se costruita nello stesso percorso. Altrove cambia solo il percorso scritto da edk2 nel payload: [dettagli](REPLICARE.md#build-di-coreboot).
+- 2026-11-11: variante **Heads sperimentale con TPM** in `heads/`: [docs/HEADS.md](HEADS.md). coreboot della variante compilato fuori da Heads, con microcode identico a `rom/edk2-senza-tpm` e 9 MB liberi per l'initrd. Costruita in Heads lo stesso giorno: ROM da 32 MiB, 3,4 MB liberi nella regione BIOS, mai avviata. `patches/opzionale/0003` riallineata, prima non si applicava dopo la `0004`.
+- 2026-11-11: terza ROM, **edk2 con TPM** (`rom/edk2-con-tpm`, `VARIANTE=tpm tools/build.sh`), per avere Windows con BitLocker e aggiornamenti. Ricerca su Windows con Heads: non si avvia direttamente. `tools/cambia-firmware.sh` passa tra le ROM riscrivendo solo `WP_RO`, provato sul chip emulato: [docs/VARIANTI.md](VARIANTI.md).
+- 2026-11-11: controllata la scrittura di coreboot. Le ROM hanno il descriptor vuoto, ma `flashrom --ifd` legge quello del chip. Con il comando della guida, sul chip emulato partendo dal dump, cambia solo la regione BIOS (`0x1200000`-`0x1ffffff`), identica a quella della ROM, per `rom/edk2-senza-tpm` e `rom/edk2-con-tpm`.
 - 2026-11-11: `tools/prepara-bgoff.sh` e `verifica-bgoff.py`: build e 16 controlli in un solo comando. Provati sul dump attuale, con la stessa immagine di riferimento, e su 5 casi sbagliati: immagine della 18.1, un bit cambiato nel BIOS o in UEP, MFIT sbagliata, cartella esistente. Tutti fermati.
 
 ## Dove sono i file
 
-Dump, immagini ROM, log e software Intel restano fuori dalla repo, in una cartella di lavoro locale non versionata. Il firmware dell'EC è nella repo [x210ai-ec](https://github.com/marcocancarini/x210ai-ec).
+Dump, immagini ROM, log e software Intel restano fuori dalla repo, in una cartella di lavoro locale non versionata. Le ROM stanno in `rom/`, una cartella per variante col nome di ciò che contiene: elenco in `rom/LEGGIMI.txt` e in [VARIANTI.md](VARIANTI.md#le-rom). Il firmware dell'EC è nella repo [x210ai-ec](https://github.com/marcocancarini/x210ai-ec).
 
 ## Prossimi passi
 
@@ -40,7 +40,7 @@ Dump, immagini ROM, log e software Intel restano fuori dalla repo, in una cartel
    Provare la lettura con la sonda sul chip saldato: [sezione 6 della guida](GUIDA.md#6-dump-col-t48-e-pogo-pin).
 4. Rifare il dump con `tools/lettura.sh` e costruire `out-bgoff.bin` con `tools/prepara-bgoff.sh`, che usa MFIT 18.0 e fa tutti i controlli: [passo 3 della procedura](GUIDA.md#3-immagine-con-boot-guard-disattivato).
 5. Scrivere Boot Guard off, controllare che il BIOS originale parta e che `MSR 0x13A` sia cambiato. Rifare il dump e lanciare `tools/uep.py`.
-6. Scegliere la ROM edk2 da scrivere, senza TPM (`output-4`) o con TPM (`output-tpm-1`): [confronto](VARIANTI.md#le-tre-rom).
+6. Scegliere la ROM edk2 da scrivere, senza TPM (`rom/edk2-senza-tpm`) o con TPM (`rom/edk2-con-tpm`): [confronto](VARIANTI.md#le-rom).
 7. Scrivere coreboot e fare le prove del passo 7 della [procedura](GUIDA.md#11-procedura-passo-per-passo).
 
 ## Da fare a mano, in locale

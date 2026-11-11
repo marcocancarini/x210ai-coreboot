@@ -2,17 +2,18 @@
 
 Aggiornato il 2026-11-11. **Nessuna delle tre è mai stata scritta sul chip.** Valgono le [regole della guida](GUIDA.md#11-procedura-passo-per-passo): prima Boot Guard off e il recupero col T48.
 
-## Le tre ROM
+## Le ROM
 
 | ROM | Cartella | sha256 | TPM | Windows | Linux |
 |---|---|---|---|---|---|
-| coreboot + edk2 | `output-4` | `a606563b…` | Spento | Sì, aggiornamenti delle versioni non garantiti | Sì |
-| coreboot + edk2 con TPM | `output-tpm-1` | `774d484b…` | PTT, boot misurato | Sì, con BitLocker e aggiornamenti | Sì |
-| coreboot + Heads | `output-heads-1` | `991c9704…` | PTT, boot misurato | **No** | Sì, verificato da Heads |
+| coreboot + edk2 | `rom/edk2-senza-tpm` | `a606563b…` | Spento | Sì, aggiornamenti delle versioni non garantiti | Sì |
+| coreboot + edk2, senza fix Thunderbolt | `rom/edk2-senza-tpm-senza-fix-thunderbolt` | `ecc0d05c…` | Spento | Come sopra | Sì. Ripiego se USB-C o Thunderbolt peggiorano con la patch `0004` |
+| coreboot + edk2 con TPM | `rom/edk2-con-tpm` | `774d484b…` | PTT, boot misurato | Sì, con BitLocker e aggiornamenti | Sì |
+| coreboot + Heads | `rom/heads-con-tpm-sperimentale` | `991c9704…` | PTT, boot misurato | **No** | Sì, verificato da Heads |
 
-Hash completi in `config/rom-conosciute.txt`, cartelle nella cartella di lavoro locale.
+Hash completi in `config/rom-conosciute.txt`. Le cartelle stanno in `rom/` nella cartella di lavoro locale, con un `LEGGIMI.txt`. Tutte hanno microcode `0x2b`, tasti luminosità e HECI spento, e tutte tranne una hanno la patch Thunderbolt `0004`. Manca una ROM con TPM e senza fix Thunderbolt.
 
-La ROM edk2 con TPM è la build principale più `patches/opzionale/0003` e il TPM acceso in edk2, con `VARIANTE=tpm tools/build.sh`. La config differisce da quella principale solo nelle voci del TPM. Microcode, FSP-S, VBT e DSDT sono identici a `output-4`. FSP-M cambia solo perché viene rilocato a un altro indirizzo della CBFS, e il bootblock perché contiene il boot misurato. edk2 include `Tcg2Dxe`, quindi Windows vede il TPM. Il supporto a Secure Boot c'è come nella build principale: chiavi caricate, Secure Boot spento finché non lo si accende.
+La ROM edk2 con TPM è la build principale più `patches/opzionale/0003` e il TPM acceso in edk2, con `VARIANTE=tpm tools/build.sh`. La config differisce da quella principale solo nelle voci del TPM. Microcode, FSP-S, VBT e DSDT sono identici a `rom/edk2-senza-tpm`. FSP-M cambia solo perché viene rilocato a un altro indirizzo della CBFS, e il bootblock perché contiene il boot misurato. edk2 include `Tcg2Dxe`, quindi Windows vede il TPM. Il supporto a Secure Boot c'è come nella build principale: chiavi caricate, Secure Boot spento finché non lo si accende.
 
 Il TPM acceso riporta l'identificativo di PTT, che la build principale toglie ([sezione 10](GUIDA.md#10-tpm-spento)).
 
@@ -41,15 +42,15 @@ Le tre ROM hanno **la stessa FMAP**. Lo script riscrive quindi solo la regione `
 Prima di scrivere controlla che l'hash della ROM sia in `config/rom-conosciute.txt` e salva una copia completa del chip. Usa `flashrom` su CachyOS o `flashprog` nella shell di Heads.
 
 ```sh
-sudo tools/cambia-firmware.sh /percorso/di/output-tpm-1/coreboot-tpm.rom    # verso edk2, per Windows
-sudo tools/cambia-firmware.sh /percorso/di/output-heads-1/heads-x210ai-tpm2-sperimentale.rom    # di nuovo Heads
+sudo tools/cambia-firmware.sh /percorso/di/rom/edk2-con-tpm/x210ai-edk2-con-tpm.rom    # verso edk2, per Windows
+sudo tools/cambia-firmware.sh /percorso/di/rom/heads-con-tpm-sperimentale/x210ai-heads-con-tpm-sperimentale.rom    # di nuovo Heads
 ```
 
 **Provato il 2026-11-11 sul chip emulato da flashrom**, partendo dal dump originale della scheda: dopo il cambio `WP_RO` coincide con la ROM e il resto del chip è identico byte per byte, sia andando verso Heads sia tornando a edk2. Una ROM non elencata viene rifiutata. Mai provato sul chip vero né dalla shell di Heads.
 
 ### Il giro per una sessione di Windows
 
-1. Da CachyOS avviato con Heads: `sudo tools/cambia-firmware.sh .../coreboot-tpm.rom`, poi spegnere e riaccendere.
+1. Da CachyOS avviato con Heads: `sudo tools/cambia-firmware.sh .../x210ai-edk2-con-tpm.rom`, poi spegnere e riaccendere.
 2. edk2 avvia Windows o CachyOS: si sceglie dal menu di avvio.
 3. Finito con Windows: riavviare in CachyOS, che parte anche con edk2, e rimettere Heads con lo script.
 
@@ -83,4 +84,4 @@ Sotto il Linux avviato da Heads: QEMU/KVM con un TPM virtuale (`swtpm`) e firmwa
 | Mai scrivere sulla flash | Heads | Macchina virtuale |
 | Nessun identificativo TPM | edk2 senza TPM | Menu di avvio, con i limiti della [sezione 10](GUIDA.md#10-tpm-spento) |
 
-In ogni caso, la prima ROM da scrivere resta `output-4` o `output-tpm-1`, per un primo avvio con edk2. Heads si prova solo dopo.
+In ogni caso, la prima ROM da scrivere resta `rom/edk2-senza-tpm` o `rom/edk2-con-tpm`, per un primo avvio con edk2. Heads si prova solo dopo.
