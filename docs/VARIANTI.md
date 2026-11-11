@@ -1,4 +1,4 @@
-# Le tre ROM e come passare dall'una all'altra
+# Le ROM e come passare dall'una all'altra
 
 Aggiornato il 2026-11-11. **Nessuna delle tre è mai stata scritta sul chip.** Valgono le [regole della guida](GUIDA.md#11-procedura-passo-per-passo): prima Boot Guard off e il recupero col T48.
 
@@ -34,7 +34,7 @@ Le strade praticabili restano due: **cambiare firmware** quando serve Windows, o
 
 ## Cambiare firmware: `tools/cambia-firmware.sh`
 
-Le tre ROM hanno **la stessa FMAP**. Lo script riscrive quindi solo la regione `WP_RO`, cioè FMAP e firmware, 13,4 MiB, e lascia com'erano:
+Tutte le ROM hanno **la stessa FMAP**. Lo script riscrive quindi solo la regione `WP_RO`, cioè FMAP e firmware, 13,4 MiB, e lascia com'erano:
 
 - `SMMSTORE`: le variabili UEFI di edk2, con le voci di avvio di Windows e di CachyOS e le chiavi di Secure Boot;
 - `RW_MRC_CACHE`: l'addestramento della RAM;

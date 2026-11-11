@@ -14,7 +14,7 @@ Parte dal port di Fionn Cassidy, [WheeledCord/coreboot-x210ai](https://github.co
 | [docs/GUIDA.md](docs/GUIDA.md) | Guida completa: Boot Guard, chiavi, manufacturing mode, dump, T48, analisi, MFIT, ME, TPM spento, procedura e problemi |
 | [docs/REPLICARE.md](docs/REPLICARE.md) | Come rifare build, immagine MFIT e verifiche |
 | [docs/VERIFICHE.md](docs/VERIFICHE.md) | Cosa è stato misurato sulla scheda, bug noti e decisioni prese |
-| [docs/VARIANTI.md](docs/VARIANTI.md) | Le tre ROM (edk2, edk2 con TPM, Heads), Windows con Heads e il cambio di firmware |
+| [docs/VARIANTI.md](docs/VARIANTI.md) | Le ROM (quattro edk2, con e senza TPM e fix Thunderbolt, più Heads), Windows con Heads e il cambio di firmware |
 | [docs/HEADS-METEORLAKE.md](docs/HEADS-METEORLAKE.md) | Heads su Meteor Lake: confronto con NovaCustom V540TU/V560TU, effetti di Boot Guard spento |
 | [docs/HEADS.md](docs/HEADS.md) | Variante sperimentale con Heads e TPM: mai costruita in Heads né avviata |
 
